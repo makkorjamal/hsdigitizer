@@ -2,7 +2,6 @@ import threading
 import tkinter as tk
 import os
 import ttk
-import platform
 import numpy as np
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -12,6 +11,7 @@ from digitization import Digitizer
 from jsonparser import JsonParser
 import cv2
 from calibration import Calibrator
+
 class MainApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
@@ -22,7 +22,6 @@ class MainApp(tk.Frame):
         self.savepath = 'data/'
         home = os.path.expanduser('~')
         self.active = ""
-        # self.dpath = os.path.join(home,'spectra')#'spectra'
         self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
 
 
