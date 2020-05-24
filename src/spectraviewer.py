@@ -1,4 +1,5 @@
 import threading
+import tkinter as tk
 import os
 import ttk
 import platform
