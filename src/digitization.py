@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 from __future__ import print_function, division
+import warnings
 import concurrent.futures
+import math
 import matplotlib
 import os
 import numpy as np
@@ -13,6 +15,7 @@ from jsonparser import JsonParser
 class Digitizer():
 
     def __init__(self, dpath, savepath):
+        self.digitized_spectrum = []
 
         self.dpath = dpath
         self.sp_range = [1218, 1155]
@@ -35,9 +38,11 @@ class Digitizer():
         img = cv2.imread(os.path.join(self.dpath, img_fname))
         self.img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         self.b, self.g, _ = cv2.split(self.img)
-        self.digitized_spectrum = []
+        # self.digitized_spectrum = np.array([])
         for i in range(self.img.shape[1]):
-            self.digitized_spectrum.append(self.digitize_point(i))
+            if not ( math.isnan(self.digitize_point(i)) ) :
+                self.digitized_spectrum.append(self.digitize_point(i))
+
         if self.digitized_spectrum:
             impath = img_fname
             sp_name = img_fname[:-4]+'_digitized'+'.dat'
@@ -51,9 +56,15 @@ class Digitizer():
     def digitize_point(self, s):
         x = np.arange(self.img.shape[0])
         y = np.divide(self.b[:, s],self.g[:, s],where = self.g[:,s] != 0)
-        cond = y>(np.max(y)*0.80)
-        # cond =(np.max(y)*0.90)> y>(np.max(y)*0.80)
-        return np.mean(x[cond])
+        cond = (y>(np.max(y))*0.90) & (y<(np.max(y))*0.95)
+        
+        with warnings.catch_warnings():
+
+            warnings.filterwarnings('error')
+            try:
+                return np.nanmean(x[cond])
+            except RuntimeWarning:
+                return np.NaN
 
 if __name__ == '__main__':
     # dpath = 'images/'

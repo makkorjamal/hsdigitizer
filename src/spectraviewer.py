@@ -22,7 +22,8 @@ class MainApp(tk.Frame):
         self.savepath = 'data/'
         home = os.path.expanduser('~')
         self.active = ""
-        self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
+        # self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
+        self.dpath = os.path.join(home,'spectra/')
 
 
         # self.dpath = 'image:'
@@ -144,7 +145,7 @@ class MainApp(tk.Frame):
                 resized_img = cv2.resize(org_img,(600,300))
                 RGB_img = cv2.cvtColor(org_img, cv2.COLOR_BGR2RGB)
                 self.ax.clear()
-                self.ax.imshow(RGB_img ,interpolation= None , cmap='viridis')
+                self.ax.imshow(RGB_img ,interpolation= None , cmap='viridis',aspect='auto')
                 self.canvas.draw()
                 self.pbutton['state'] = "normal"
             if self.threadnm == "cali":
@@ -159,6 +160,7 @@ class MainApp(tk.Frame):
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected))
             if self.threadnm == "cali":
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
+                self.ax.clear()
             x_vals = np.arange(0,len(self.spectrum))
             self.ax.plot(x_vals,self.spectrum, linewidth = 0.3)
             self.canvas.draw()

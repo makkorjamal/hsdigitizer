@@ -110,6 +110,7 @@ class Calibrator():
         p, pcov = curve_fit(f, l2, l1)
         #print(p)
         #pdb.set_trace()
+        # valid = ~(np.isnan(self.x2))
         self.xcal = f(self.x2, *p)
 
     def __init__(self, dpath, savepath):
