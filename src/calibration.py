@@ -90,6 +90,8 @@ class Calibrator():
 
         xo = self.xcal
         yo = self.y2
+        yo = yo[~np.isnan(yo)]
+        xo = xo[~np.isnan(xo)]
         yn = []
         xmin, xmax = np.min(self.xcal), np.max(self.xcal)
         xn = np.linspace(xmin, xmax, int((xmax-xmin)/res))

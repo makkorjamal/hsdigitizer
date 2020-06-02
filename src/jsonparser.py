@@ -1,6 +1,6 @@
 import json
 import os
-from spectrum import Spectrum
+from spectrum import Smectrum
 class JsonParser:
     """Class to save spectra in a json file"""
 

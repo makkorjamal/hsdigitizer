@@ -27,9 +27,11 @@ class Digitizer():
 
         self.spectrums = []
         with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
-            for spectrum in executor.map(self.digitize_spectrum, self.img_names):
+            for spectrum in executor.map(
+                    self.digitize_spectrum, self.img_names
+                    ):
                 self.spectrums.append(spectrum)
-        json_parser = JsonParser('data',self.spectrums)
+        json_parser = JsonParser('data' ,self.spectrums)
         json_parser.save_json()
 
     def digitize_spectrum(self,img_fname):
@@ -40,8 +42,7 @@ class Digitizer():
         self.b, self.g, _ = cv2.split(self.img)
         # self.digitized_spectrum = np.array([])
         for i in range(self.img.shape[1]):
-            if not ( math.isnan(self.digitize_point(i)) ) :
-                self.digitized_spectrum.append(self.digitize_point(i))
+            self.digitized_spectrum.append(self.digitize_point(i))
 
         if self.digitized_spectrum:
             impath = img_fname
