@@ -22,12 +22,9 @@ class MainApp(tk.Frame):
         self.savepath = 'data/'
         home = os.path.expanduser('~')
         self.active = ""
-        # self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
-        self.dpath = os.path.join(home,'spectra/')
-
-
-        # self.dpath = 'image:'
-
+        self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
+        # self.dpath = os.path.join(home,'spectra/')
+    
     def create_widgets(self):
         self.plotframe= tk.LabelFrame(self, padx = 5, pady = 10)
         self.plotframe.grid(row = 0, column = 0)
@@ -36,7 +33,7 @@ class MainApp(tk.Frame):
         plot_width = int(0.9*(self.parent.winfo_width()/screen_dpi))
         plot_height =int( 0.9*(self.parent.winfo_height()/screen_dpi))
         fig = Figure(figsize=(plot_width, plot_height), dpi=screen_dpi)
-        t = np.arange(0, 3, .01)
+        # t = np.arange(0, 3, .01)
         self.ax = fig.add_subplot(111)
         self.ax.set_title("Digitized Spectra")
         self.canvas = FigureCanvasTkAgg(fig, master=self.plotframe)

@@ -2,6 +2,7 @@
 from __future__ import print_function, division
 import os
 import numpy as np
+from utilfunc import imputate_nan
 import datetime as dt
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons, TextBox
@@ -42,7 +43,8 @@ class Calibrator():
     def save_data(self,digitized_sp):
         self.fname = digitized_sp
         # print('Reading ', os.path.join(self.path, self.fname), '...')
-        self.data = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
+        data = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
+        self.data = imputate_nan(data)
         self.y = self.data.y*(-1)+np.max(self.data.y)
         self.yoffset = 0
         self.y2 =( self.y-self.yoffset)/np.max(self.y-self.yoffset)

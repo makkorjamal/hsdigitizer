@@ -18,7 +18,7 @@ class Digitizer():
         self.digitized_spectrum = []
 
         self.dpath = dpath
-        self.sp_range = [1218, 1155]
+        self.sp_range = []
         self.savepath = savepath
         self.parallelize()
 
