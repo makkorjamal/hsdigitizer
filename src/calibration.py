@@ -43,9 +43,10 @@ class Calibrator():
     def save_data(self,digitized_sp):
         self.fname = digitized_sp
         # print('Reading ', os.path.join(self.path, self.fname), '...')
-        data = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
-        self.data = imputate_nan(data)
-        self.y = self.data.y*(-1)+np.max(self.data.y)
+        self.dta = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
+        print(self.dta)
+        self.dta = imputate_nan(self.dta)
+        self.y = self.dta*(-1)+np.max(self.dta)
         self.yoffset = 0
         self.y2 =( self.y-self.yoffset)/np.max(self.y-self.yoffset)
         self.x2 = np.arange(len(self.y2))
@@ -120,6 +121,7 @@ class Calibrator():
     def __init__(self, dpath, savepath):
         self.path = dpath
         self.savepath = savepath
+        # self.save_data(os.path.join('14065069_digitized.dat'))
         self.parallelize()
         # d = np.recfromtxt('data/S16428AC_025_trian_zf2.dpt', names=['w', 'i'], encoding='utf8')
         # self.x1 = d.w
