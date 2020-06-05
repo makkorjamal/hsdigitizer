@@ -7,17 +7,17 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 # Implement the default Matplotlib key bindings.
 from matplotlib.figure import Figure
-from digitization import Digitizer
 from jsonparser import JsonParser
 import cv2
 from calibration import Calibrator
 
-class DigiApp(tk.Frame):
+class CaliApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.create_widgets()
         self.data = []
+        self.x_vals = []
         self.threadnm = ""
         self.savepath = 'data/'
         home = os.path.expanduser('~')
@@ -35,7 +35,7 @@ class DigiApp(tk.Frame):
         fig = Figure(figsize=(plot_width, plot_height), dpi=screen_dpi)
         # t = np.arange(0, 3, .01)
         self.ax = fig.add_subplot(111)
-        self.ax.set_title("Digitized Spectra")
+        self.ax.set_title("Calibrated Spectra")
         self.canvas = FigureCanvasTkAgg(fig, master=self.plotframe)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row = 0, column = 0)
@@ -50,20 +50,22 @@ class DigiApp(tk.Frame):
         self.spectralist.bind('<Double-1>', self.on_list_select)
 
         ####
-       #Digitize 
+       #Calibrate 
 
 
         self.commandframe = tk.LabelFrame(self, padx = 15, pady = 15)
         self.commandframe.grid(row = 1, column = 0)
-        self.dbutton_text = tk.StringVar()
-        self.dbutton_text.set("Digitize")
-        self.dbutton = tk.Button(self.commandframe, textvariable = self.dbutton_text, command =lambda: self.start_multip_thread("digi"), padx = 10, pady = 4, font = ("Helvetica", 16))
-        self.dbutton.grid(row = 0, column = 0)
+        self.cbutton = tk.Button(self.commandframe, text = "Calibrate", command = lambda: self.start_multip_thread("cali"), padx = 10, pady = 4, font = ("Helvetica", 16))
+        self.cbutton.grid(row = 0, column = 1)
 
        #Plot 
         self.pbutton = tk.Button(self.commandframe, text = "Plot", command = self.plot_spectra, padx = 10, pady = 4, font = ("Helvetica", 16))
         self.pbutton.grid(row = 0, column = 2)
         self.pbutton['state'] = tk.DISABLED
+        self.hscale_var = tk.DoubleVar()
+        self.hscale_var.set(0)
+        self.hscaler = tk.Scale(self.plotframe, from_=-50, to=50, command=self.scaleSpectra, variable=self.hscale_var, orient=tk.HORIZONTAL, length= 300)
+        self.hscaler.grid(row = 1, column = 0)
        #Quit 
         self.qbutton = tk.Button(self.commandframe, text = "Quit", command = self.quit, padx = 5, pady = 4, font = ("Helvetica", 16))
         self.qbutton.grid(row = 0, column = 3)
@@ -74,17 +76,17 @@ class DigiApp(tk.Frame):
         self.parent.quit()     # stops mainloop
         self.parent.destroy()  # this is necessary on Windows to prevent
 
-    def digitize_sp(self):
+    def calibrate_sp(self):
 
-        Digitizer(self.dpath, self.savepath)
+        Calibrator(self.savepath, self.savepath)
 
     def start_multip_thread(self, threadnm):
 
         self.threadnm = threadnm
         global g_thread
-        if threadnm == "digi":
-            g_thread = threading.Thread(target=self.digitize_sp)
-            self.dbutton['state'] = tk.DISABLED
+        if threadnm == "cali":
+            g_thread = threading.Thread(target=self.calibrate_sp)
+            self.cbutton['state'] = tk.DISABLED
         g_thread.daemon = True
         self.progressbar.start()
         g_thread.start()
@@ -99,42 +101,51 @@ class DigiApp(tk.Frame):
 
     def populate_list(self,dpath):
 
-        if self.threadnm == "digi":
+        if self.threadnm == "cali":
             self.spectralist.delete(0,tk.END)
-            self.dbutton['state'] = tk.DISABLED
+            self.cbutton['state'] = tk.DISABLED
             jsparser = JsonParser(self.savepath,[])
             self.data = jsparser.read_json('spectra_file.json')
             for dx in self.data:
-                self.spectralist.insert(tk.END, dx.img_name)
-
+                self.spectralist.insert(tk.END, dx.calsp_name)
+                print(dx.calsp_name)
+            self.ax.clear()
+            self.canvas.draw()
     def on_list_select(self,event):
 
         self.active = self.spectralist.get(tk.ACTIVE)
         if self.data:
             for od in self.data:
-                if od.img_name == self.active and self.threadnm == "digi":
-                    self.sp_selected = od.sp_name
-                    self.img_selected = od.img_name
-            if self.threadnm == "digi":
-                im_path = os.path.join(self.dpath,self.img_selected)
-                org_img = cv2.imread(im_path,cv2.COLOR_BGR2RGB)
-                resized_img = cv2.resize(org_img,(600,300))
-                RGB_img = cv2.cvtColor(org_img, cv2.COLOR_BGR2RGB)
-                self.ax.clear()
-                self.ax.imshow(RGB_img ,interpolation= None , cmap='viridis',aspect='auto')
-                self.canvas.draw()
+                if self.active == od.calsp_name and self.threadnm == "cali":
+                    self.sp_selected = od.calsp_name
+            if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
-    
+                # self.canvas.draw()
+
+
     def plot_spectra(self):
         #get selected spectra and plot
         try:
-            if self.threadnm == "digi":
-                self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected))
-            x_vals = np.arange(0,len(self.spectrum))
-            self.ax.plot(x_vals,self.spectrum, linewidth = 0.3)
+            if self.threadnm == "cali":
+                self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
+                self.ax.clear()
+            self.x_vals = np.arange(0,len(self.spectrum))
+            self.line, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
             self.canvas.draw()
         except FileNotFoundError:
             print('File not found')
+
+    def scaleSpectra(self, dummy):
+        if self.threadnm == "cali":
+            scale_value = self.hscaler.get()
+            self.x_vals =  self.x_vals * (1 + 1/scale_value)
+            print("Scaling")
+            # self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
+            self.line.set_xdata(self.x_vals)
+            self.canvas.draw_idle()
+        else:
+            print("First plot spectra to scale")
+            print(self.hscaler.get())
 
 
 if __name__ == "__main__":
@@ -144,6 +155,6 @@ if __name__ == "__main__":
     root.resizable(False, False)
     root.title("Spectra Digitizer")
     root.geometry("{}x{}".format(int(width - 0.2*width),int(height - 0.2*height)))
-    DigiApp(root).pack()
+    CaliApp(root).pack()
     root.mainloop()
 

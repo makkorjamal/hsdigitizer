@@ -1,5 +1,6 @@
 import tkinter as tk
-from digiviewer import MainApp
+from digiviewer import DigiApp
+from caliviewer import CaliApp
 import ttk
 
 class Root(tk.Tk):
@@ -25,10 +26,10 @@ class Root(tk.Tk):
 class MenuBar(tk.Menu):
     def __init__(self, parent):
         tk.Menu.__init__(self, parent)
-
+        self.parent = parent
         filemenu = tk.Menu(self, tearoff=False)
         self.add_cascade(label="File",underline=0, menu=filemenu)
-        filemenu.add_command(label="New", command=self.callback)
+        filemenu.add_command(label="Set Param", command=self.callback)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", underline=1, command=self.quit)
 
@@ -37,10 +38,11 @@ class MenuBar(tk.Menu):
         helpmenu.add_command(label="About...", command=self.callback)
 
     def quit(self):
-        sys.exit(0)
+        self.parent.quit()     # stops mainloop
+        self.parent.destroy()  # this is necessary on Windows to prevent
     
     def callback(self):
-        print(  "called the callback!" )
+        print(  "Spectra Digitizer" )
 
 class StatusBar(ttk.Frame):
 
@@ -64,8 +66,10 @@ class Application(ttk.Notebook):
         
         tab1 = ttk.Frame(self)
         tab2 = ttk.Frame(self)
-        self.add(MainApp(root) , text = "Digitization")
-        self.add(tab2, text = "Calibration")
+        digi_app = DigiApp(root)
+        cali_app = CaliApp(root)
+        self.add(digi_app, text = "Digitization")
+        self.add(cali_app , text = "Calibration")
 
 root = Root()
 root.mainloop()
