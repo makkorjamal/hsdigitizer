@@ -39,8 +39,10 @@ class DigiApp(tk.Frame):
         self.canvas = FigureCanvasTkAgg(fig, master=self.plotframe)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row = 0, column = 0)
-        self.empty_lbl = tk.Label(self.plotframe, text = "", pady = 10)
-        self.empty_lbl.grid(row = 1, column = 0)
+        self.empty_vbl = tk.Label(self.plotframe, text = "", padx = 10)
+        self.empty_vbl.grid(row = 0, column = 1)
+        self.empty_hbl = tk.Label(self.plotframe, text = "", pady = 10)
+        self.empty_hbl.grid(row = 1, column = 0)
         ####
         self.listframe = tk.LabelFrame(self, padx = 20, pady = 16)
         self.listframe.grid(row = 0, column = 1)
