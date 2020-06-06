@@ -26,7 +26,7 @@ class DigiApp(tk.Frame):
         # self.dpath = os.path.join(home,'spectra/')
     
     def create_widgets(self):
-        self.plotframe= tk.LabelFrame(self, padx = 5, pady = 10)
+        self.plotframe= tk.LabelFrame(self, padx = 10, pady = 10)
         self.plotframe.grid(row = 0, column = 0)
         screen_dpi = 200 
         self.parent.update()
@@ -39,8 +39,10 @@ class DigiApp(tk.Frame):
         self.canvas = FigureCanvasTkAgg(fig, master=self.plotframe)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row = 0, column = 0)
+        self.empty_lbl = tk.Label(self.plotframe, text = "", pady = 10)
+        self.empty_lbl.grid(row = 1, column = 0)
         ####
-        self.listframe = tk.LabelFrame(self, padx = 5, pady = 10)
+        self.listframe = tk.LabelFrame(self, padx = 20, pady = 16)
         self.listframe.grid(row = 0, column = 1)
         self.spectralist = tk.Listbox(self.listframe, height = plot_height*10, font = ("Helvetica", 12))
         self.spectralist.pack(side="left", fill="x")

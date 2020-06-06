@@ -2,10 +2,9 @@ import tkinter as tk
 from digiviewer import DigiApp
 from caliviewer import CaliApp
 import ttk
+import sp_globals 
 
 class Root(tk.Tk):
-    """Container for all frames within the application"""
-    
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         
@@ -19,8 +18,11 @@ class Root(tk.Tk):
         
         self.appFrame = Application(self)
         self.appFrame.pack(side='top', fill='both', expand='True')
-        
         self.status = StatusBar(self)
+        if sp_globals.cal_gthread.is_alive():
+            self.status.set("Calibrating...")
+        elif sp_globals.cal_gthread.is_alive():
+            self.status.clear()
         self.status.pack(side='bottom', fill='x')
         
 class MenuBar(tk.Menu):
@@ -68,6 +70,7 @@ class Application(ttk.Notebook):
         tab2 = ttk.Frame(self)
         digi_app = DigiApp(root)
         cali_app = CaliApp(root)
+        # global cali_gthread = cali_app.get_globals()
         self.add(digi_app, text = "Digitization")
         self.add(cali_app , text = "Calibration")
 

@@ -2,6 +2,7 @@ import threading
 import tkinter as tk
 import os
 import ttk
+import sp_globals
 import numpy as np
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -26,7 +27,7 @@ class CaliApp(tk.Frame):
         # self.dpath = os.path.join(home,'spectra/')
     
     def create_widgets(self):
-        self.plotframe= tk.LabelFrame(self, padx = 5, pady = 10)
+        self.plotframe= tk.LabelFrame(self, padx = 10, pady = 15)
         self.plotframe.grid(row = 0, column = 0)
         screen_dpi = 200 
         self.parent.update()
@@ -40,7 +41,7 @@ class CaliApp(tk.Frame):
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row = 0, column = 0)
         ####
-        self.listframe = tk.LabelFrame(self, padx = 5, pady = 10)
+        self.listframe = tk.LabelFrame(self, padx = 20, pady =16)
         self.listframe.grid(row = 0, column = 1)
         self.spectralist = tk.Listbox(self.listframe, height = plot_height*10, font = ("Helvetica", 12))
         self.spectralist.pack(side="left", fill="x")
@@ -63,8 +64,8 @@ class CaliApp(tk.Frame):
         self.pbutton.grid(row = 0, column = 2)
         self.pbutton['state'] = tk.DISABLED
         self.hscale_var = tk.DoubleVar()
-        self.hscale_var.set(0)
-        self.hscaler = tk.Scale(self.plotframe, from_=-50, to=50, command=self.scaleSpectra, variable=self.hscale_var, orient=tk.HORIZONTAL, length= 300)
+        self.hscale_var.set(50)
+        self.hscaler = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.hscale_var, orient=tk.HORIZONTAL, length= 300)
         self.hscaler.grid(row = 1, column = 0)
        #Quit 
         self.qbutton = tk.Button(self.commandframe, text = "Quit", command = self.quit, padx = 5, pady = 4, font = ("Helvetica", 16))
@@ -83,17 +84,17 @@ class CaliApp(tk.Frame):
     def start_multip_thread(self, threadnm):
 
         self.threadnm = threadnm
-        global g_thread
         if threadnm == "cali":
-            g_thread = threading.Thread(target=self.calibrate_sp)
+            self.g_thread = threading.Thread(target=self.calibrate_sp)
+            sp_globals.cal_gthread = self.g_thread
             self.cbutton['state'] = tk.DISABLED
-        g_thread.daemon = True
+        self.g_thread.daemon = True
         self.progressbar.start()
-        g_thread.start()
+        self.g_thread.start()
         self.parent.after(20, self.check_g_thread)
 
     def check_g_thread(self):
-        if g_thread.is_alive():
+        if self.g_thread.is_alive():
             self.parent.after(20, self.check_g_thread)
         else:
             self.progressbar.stop()
@@ -122,7 +123,6 @@ class CaliApp(tk.Frame):
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
 
-
     def plot_spectra(self):
         #get selected spectra and plot
         try:
@@ -138,10 +138,9 @@ class CaliApp(tk.Frame):
     def scaleSpectra(self, dummy):
         if self.threadnm == "cali":
             scale_value = self.hscaler.get()
-            self.x_vals =  self.x_vals * (1 + 1/scale_value)
-            print("Scaling")
+            x_vals =  self.x_vals * (scale_value/50)
             # self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
-            self.line.set_xdata(self.x_vals)
+            self.line.set_xdata(x_vals)
             self.canvas.draw_idle()
         else:
             print("First plot spectra to scale")

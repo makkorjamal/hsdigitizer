@@ -44,7 +44,6 @@ class Calibrator():
         self.fname = digitized_sp
         # print('Reading ', os.path.join(self.path, self.fname), '...')
         self.dta = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
-        print(self.dta)
         self.dta = imputate_nan(self.dta)
         self.y = self.dta*(-1)+np.max(self.dta)
         self.yoffset = 0
