@@ -63,10 +63,16 @@ class CaliApp(tk.Frame):
         self.pbutton = tk.Button(self.commandframe, text = "Plot", command = self.plot_spectra, padx = 10, pady = 4, font = ("Helvetica", 16))
         self.pbutton.grid(row = 0, column = 2)
         self.pbutton['state'] = tk.DISABLED
+
         self.hscale_var = tk.DoubleVar()
         self.hscale_var.set(50)
         self.hscaler = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.hscale_var, orient=tk.HORIZONTAL, length= 300)
         self.hscaler.grid(row = 1, column = 0)
+
+        self.vscale_var = tk.DoubleVar()
+        self.vscale_var.set(50)
+        self.vscaler = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.vscale_var, orient=tk.VERTICAL, length= 300)
+        self.vscaler.grid(row = 0, column = 1)
        #Quit 
         self.qbutton = tk.Button(self.commandframe, text = "Quit", command = self.quit, padx = 5, pady = 4, font = ("Helvetica", 16))
         self.qbutton.grid(row = 0, column = 3)
@@ -137,10 +143,13 @@ class CaliApp(tk.Frame):
 
     def scaleSpectra(self, dummy):
         if self.threadnm == "cali":
-            scale_value = self.hscaler.get()
-            x_vals =  self.x_vals * (scale_value/50)
+            hscale_value = self.hscaler.get()
+            vscale_value = self.vscaler.get()
+            x_vals =  self.x_vals * (hscale_value/50)
+            y_vals = self.spectrum * (vscale_value/50)
             # self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
             self.line.set_xdata(x_vals)
+            self.line.set_ydata(y_vals)
             self.canvas.draw_idle()
         else:
             print("First plot spectra to scale")
