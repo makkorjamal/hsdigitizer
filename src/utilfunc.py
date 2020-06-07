@@ -1,9 +1,18 @@
 # import image_slicer
-from image_slicer import slice
+import image_slicer 
 from sklearn.impute import SimpleImputer
 import numpy as np
 import os
+from itertools import product
+
 import glob
+
+def create_sprange(sp_min, sp_max,nm_sp):
+    c = []
+    ra = np.linspace(sp_min, sp_max, nm_sp)
+    ra = [int(i) for i in ra]
+    [c.append([ra[i-1],ra[i]] ) for i in np.arange(1, len(ra))]
+    return c
 
 def imputate_nan(sp_file):
     idx1 = np.arange(0, 70)
@@ -15,4 +24,9 @@ def imputate_nan(sp_file):
     imp.fit(newfile)
     imputated_file = imp.transform(newfile)
     return (imputated_file.flatten())
+
+
+if __name__ == "__main__":
+    # image_slicer.slice(os.path.join('images/','sroll_17_avril.tif' ), row = 1, col = 6, save = True , DecompressionBombWarning=False)
+    print(create_sprange(3249, 3565, 7))
 

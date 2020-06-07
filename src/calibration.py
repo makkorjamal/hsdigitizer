@@ -9,6 +9,7 @@ from matplotlib.widgets import Slider, Button, RadioButtons, TextBox
 from scipy.optimize import curve_fit
 from jsonparser import JsonParser
 import concurrent.futures
+from utilfunc import create_sprange
 from spectrum import Spectrum
 from itertools import zip_longest
 
@@ -21,7 +22,7 @@ class Calibrator():
         self.spectrums = []
         tmp_img_names = []
         tmp_sp_names = []
-        tmp_sp_ranges = []
+        tmp_sp_ranges = create_sprange(3249, 3565, 7)
         tmp_calsp_names = []
         tmp_calsplines_names = [] 
 
@@ -78,7 +79,7 @@ class Calibrator():
         return [c_fname.replace(self.savepath, ""), cl_fname.replace(self.savepath,"")]
     
     def read_cali_lines(self):
-        fname = os.path.join(self.path, '13490167_digitized_cal_lines.dat')
+        fname = os.path.join(self.path, 'cal_lines.dat')
         with open(fname, 'r') as f:
             ll = f.readlines()
         self.ax1_lines = [float(i.split()[0]) for i in ll]

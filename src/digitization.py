@@ -56,7 +56,7 @@ class Digitizer():
     def digitize_point(self, s):
         x = np.arange(self.img.shape[0])
         y = np.divide(self.b[:, s],self.g[:, s],where = self.g[:,s] != 0)
-        cond = (y>(np.max(y))*0.90) & (y<(np.max(y))*0.95)
+        cond = (y>(np.max(y))*0.80) & (y<(np.max(y))*0.95)
         
         with warnings.catch_warnings():
 

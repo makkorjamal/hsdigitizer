@@ -26,8 +26,9 @@ class DigiApp(tk.Frame):
         self.threadnm = ""
         home = os.path.expanduser('~')
         self.active = ""
-        self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
+        # self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
         # self.dpath = '/mnt/740617C970FA5889/spectra_16_avril'
+        self.dpath = 'images/'
         # self.dpath = os.path.join(home,'spectra/')
     
     def create_widgets(self):
@@ -89,7 +90,7 @@ class DigiApp(tk.Frame):
 
     def start_multip_thread(self, threadnm):
         if self.data:
-            self.messagebox = tk.messagebox.askquestion("Digitize", "Spectra already digitzed proceed?", icon = 'warning')
+            self.messagebox = tk.messagebox.askquestion("Digitize", "Spectra already digitized, digitize again? ", icon = 'warning')
 
             if self.messagebox == "yes":
                 self.threadnm = threadnm

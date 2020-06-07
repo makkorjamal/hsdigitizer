@@ -2,7 +2,7 @@ import threading
 import tkinter as tk
 import os
 import ttk
-import sp_globals
+import config
 import numpy as np
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -94,7 +94,6 @@ class CaliApp(tk.Frame):
         self.threadnm = threadnm
         if threadnm == "cali":
             self.g_thread = threading.Thread(target=self.calibrate_sp)
-            sp_globals.cal_gthread = self.g_thread
             self.cbutton['state'] = tk.DISABLED
         self.g_thread.daemon = True
         self.progressbar.start()
@@ -127,6 +126,7 @@ class CaliApp(tk.Frame):
             for od in self.data:
                 if self.active == od.calsp_name and self.threadnm == "cali":
                     self.sp_selected = od.calsp_name
+                    self.sp_range = od.sp_range
             if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
@@ -139,12 +139,13 @@ class CaliApp(tk.Frame):
                 self.ftir_sp = np.recfromtxt('data/S16428AC_025_trian_zf2.dpt', names=['w', 'i'], encoding='utf8')
                 self.ftir_wv = self.ftir_sp.w
                 self.ftir_in = self.ftir_sp.i
-                self.fax.plot(self.ftir_wv[( self.ftir_wv>2000 ) & ( self.ftir_wv<3000)], (self.ftir_in[( self.ftir_wv <3000) & ( self.ftir_wv>2000 )]), linewidth = 0.3)
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
                 self.ax.clear()
+                self.fax.clear()
 
-            self.x_vals = np.linspace(1120,1220,len(self.spectrum))
+            self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
             self.line, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
+            # self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), linewidth = 0.3)
             self.canvas.draw()
         except FileNotFoundError:
             print('File not found')
@@ -153,7 +154,7 @@ class CaliApp(tk.Frame):
         if self.threadnm == "cali":
             hscale_value = self.hscaler.get()
             vscale_value = self.vscaler.get()
-            x_vals =  self.x_vals * (hscale_value/50)
+            x_vals =  self.x_vals * (hscale_value)
             y_vals = self.spectrum * (vscale_value/50)
             # self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
             self.line.set_xdata(x_vals)

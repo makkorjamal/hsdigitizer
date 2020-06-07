@@ -2,12 +2,12 @@ import tkinter as tk
 from digiviewer import DigiApp
 from caliviewer import CaliApp
 import ttk
-import sp_globals 
+import config
 
 class Root(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-        
+
         width = self.winfo_screenwidth()
         height = self.winfo_screenheight()
         self.resizable(False, False)
@@ -15,16 +15,11 @@ class Root(tk.Tk):
         self.geometry("{}x{}".format(int(width - 0.2*width),int(height - 0.2*height)))
         #initialize menu
         self.config(menu=MenuBar(self))
-        
         self.appFrame = Application(self)
         self.appFrame.pack(side='top', fill='both', expand='True')
         self.status = StatusBar(self)
-        if sp_globals.cal_gthread.is_alive():
-            self.status.set("Calibrating...")
-        elif sp_globals.cal_gthread.is_alive():
-            self.status.clear()
         self.status.pack(side='bottom', fill='x')
-        
+
 class MenuBar(tk.Menu):
     def __init__(self, parent):
         tk.Menu.__init__(self, parent)
