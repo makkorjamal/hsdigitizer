@@ -40,10 +40,6 @@ class CaliApp(tk.Frame):
         self.ax.set_title("Calibrated Spectra")
         self.canvas = FigureCanvasTkAgg(fig, master=self.plotframe)
 
-        self.ftir_sp = np.recfromtxt('data/S16428AC_025_trian_zf2.dpt', names=['w', 'i'], encoding='utf8')
-        self.ftir_wv = self.ftir_sp.w
-        self.ftir_in = self.ftir_sp.i
-        self.fax.plot(self.ftir_wv[( self.ftir_wv>2000 ) & ( self.ftir_wv<3000)], (self.ftir_in[( self.ftir_wv <3000) & ( self.ftir_wv>2000 )]), linewidth = 0.3)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row = 0, column = 0)
         ####
@@ -139,6 +135,11 @@ class CaliApp(tk.Frame):
         #get selected spectra and plot
         try:
             if self.threadnm == "cali":
+
+                self.ftir_sp = np.recfromtxt('data/S16428AC_025_trian_zf2.dpt', names=['w', 'i'], encoding='utf8')
+                self.ftir_wv = self.ftir_sp.w
+                self.ftir_in = self.ftir_sp.i
+                self.fax.plot(self.ftir_wv[( self.ftir_wv>2000 ) & ( self.ftir_wv<3000)], (self.ftir_in[( self.ftir_wv <3000) & ( self.ftir_wv>2000 )]), linewidth = 0.3)
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
                 self.ax.clear()
 

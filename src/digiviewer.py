@@ -17,12 +17,17 @@ class DigiApp(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.create_widgets()
-        self.data = []
-        self.threadnm = ""
         self.savepath = 'data/'
+        try:
+            jsparser = JsonParser(self.savepath,[])
+            self.data = jsparser.read_json('spectra_file.json')
+        except FileNotFoundError:
+            self.data = []
+        self.threadnm = ""
         home = os.path.expanduser('~')
         self.active = ""
         self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
+        # self.dpath = '/mnt/740617C970FA5889/spectra_16_avril'
         # self.dpath = os.path.join(home,'spectra/')
     
     def create_widgets(self):
@@ -83,19 +88,31 @@ class DigiApp(tk.Frame):
         Digitizer(self.dpath, self.savepath)
 
     def start_multip_thread(self, threadnm):
+        if self.data:
+            self.messagebox = tk.messagebox.askquestion("Digitize", "Spectra already digitzed proceed?", icon = 'warning')
 
-        self.threadnm = threadnm
-        global g_thread
-        if threadnm == "digi":
-            g_thread = threading.Thread(target=self.digitize_sp)
-            self.dbutton['state'] = tk.DISABLED
-        g_thread.daemon = True
-        self.progressbar.start()
-        g_thread.start()
-        self.parent.after(20, self.check_g_thread)
+            if self.messagebox == "yes":
+                self.threadnm = threadnm
+                if threadnm == "digi":
+                    self.g_thread = threading.Thread(target=self.digitize_sp)
+                    self.dbutton['state'] = tk.DISABLED
+                self.g_thread.daemon = True
+                self.progressbar.start()
+                self.g_thread.start()
+                self.parent.after(20, self.check_g_thread)
+            else:
+                self.populate_list(self.dpath)
+        else:
+                self.threadnm = threadnm
+                if threadnm == "digi":
+                    self.g_thread = threading.Thread(target=self.digitize_sp)
+                    self.dbutton['state'] = tk.DISABLED
+                self.g_thread.daemon = True
+                self.progressbar.start()
+                self.g_thread.start()
 
     def check_g_thread(self):
-        if g_thread.is_alive():
+        if self.g_thread.is_alive():
             self.parent.after(20, self.check_g_thread)
         else:
             self.progressbar.stop()
@@ -103,11 +120,10 @@ class DigiApp(tk.Frame):
 
     def populate_list(self,dpath):
 
+        self.threadnm = "digi"
         if self.threadnm == "digi":
             self.spectralist.delete(0,tk.END)
             self.dbutton['state'] = tk.DISABLED
-            jsparser = JsonParser(self.savepath,[])
-            self.data = jsparser.read_json('spectra_file.json')
             for dx in self.data:
                 self.spectralist.insert(tk.END, dx.img_name)
 

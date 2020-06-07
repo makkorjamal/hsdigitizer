@@ -1,4 +1,5 @@
 # import image_slicer
+from image_slicer import slice
 from sklearn.impute import SimpleImputer
 import numpy as np
 import os

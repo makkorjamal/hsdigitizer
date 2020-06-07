@@ -8,7 +8,6 @@ import os
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-# from matplotlib.widgets import Slider, Button, RadioButtons, TextBox
 from spectrum import Spectrum
 from jsonparser import JsonParser
 
@@ -26,7 +25,7 @@ class Digitizer():
         self.img_names = os.listdir(self.dpath)
 
         self.spectrums = []
-        with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
             for spectrum in executor.map(
                     self.digitize_spectrum, self.img_names
                     ):
