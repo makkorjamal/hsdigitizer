@@ -10,6 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 from spectrum import Spectrum
 from jsonparser import JsonParser
+import glob
 
 class Digitizer():
 
@@ -22,7 +23,9 @@ class Digitizer():
         self.parallelize()
 
     def parallelize(self):
-        self.img_names = os.listdir(self.dpath)
+        # self.img_names = sorted(glob.glob(os.path.join(self.dpath,'*.tif')))
+        self.img_names = sorted(os.listdir(self.dpath))
+        print(self.img_names)
 
         self.spectrums = []
         with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:

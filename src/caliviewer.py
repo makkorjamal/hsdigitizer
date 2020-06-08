@@ -23,8 +23,7 @@ class CaliApp(tk.Frame):
         self.savepath = 'data/'
         home = os.path.expanduser('~')
         self.active = ""
-        self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
-        # self.dpath = os.path.join(home,'spectra/')
+        self.dpath = ''
     
     def create_widgets(self):
         self.plotframe= tk.LabelFrame(self, padx = 10, pady = 15)
@@ -145,7 +144,7 @@ class CaliApp(tk.Frame):
 
             self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
             self.line, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
-            # self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), linewidth = 0.3)
+            self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), linewidth = 0.3)
             self.canvas.draw()
         except FileNotFoundError:
             print('File not found')

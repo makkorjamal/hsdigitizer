@@ -22,9 +22,9 @@ class Calibrator():
         self.spectrums = []
         tmp_img_names = []
         tmp_sp_names = []
-        tmp_sp_ranges = create_sprange(3249, 3565, 7)
+        tmp_sp_ranges = create_sprange(3249, 3565, 6)
         tmp_calsp_names = []
-        tmp_calsplines_names = [] 
+        tmp_calsplines_names = []
 
 
         sp_names = []
@@ -34,7 +34,7 @@ class Calibrator():
             tmp_sp_ranges.append(dd.sp_range)
 
         with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
-            for names in executor.map(self.save_data,tmp_sp_names): 
+            for names in executor.map(self.save_data,tmp_sp_names):
                 tmp_calsplines_names.append(names[1])
                 tmp_calsp_names.append(names[0])
         self.spectrums = [Spectrum(tmp_img_name, tmp_sp_name, tmp_calsp_name, tmp_calsplines_name, tmp_sp_range) for tmp_img_name, tmp_sp_name, tmp_calsp_name, tmp_calsplines_name , tmp_sp_range in zip_longest(tmp_img_names, tmp_sp_names, tmp_calsp_names, tmp_calsplines_names, tmp_sp_ranges)]
