@@ -135,7 +135,7 @@ class CaliApp(tk.Frame):
         try:
             if self.threadnm == "cali":
 
-                self.ftir_sp = np.recfromtxt('data/S16428AC_025_trian_zf2.dpt', names=['w', 'i'], encoding='utf8')
+                self.ftir_sp = np.recfromtxt('data/simulated.dat', names=['w', 'i'], encoding='utf8')
                 self.ftir_wv = self.ftir_sp.w
                 self.ftir_in = self.ftir_sp.i
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
@@ -143,8 +143,11 @@ class CaliApp(tk.Frame):
                 self.fax.clear()
 
             self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
+            self.hscale_var.set( self.sp_range[1])
+            self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1])
             self.line, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
-            self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), linewidth = 0.3)
+            self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3, label = 'Simulated')
+            self.fax.legend()
             self.canvas.draw()
         except FileNotFoundError:
             print('File not found')
@@ -153,9 +156,8 @@ class CaliApp(tk.Frame):
         if self.threadnm == "cali":
             hscale_value = self.hscaler.get()
             vscale_value = self.vscaler.get()
-            x_vals =  self.x_vals * (hscale_value)
+            x_vals =  self.x_vals * (hscale_value/self.sp_range[1])
             y_vals = self.spectrum * (vscale_value/50)
-            # self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
             self.line.set_xdata(x_vals)
             self.line.set_ydata(y_vals)
             self.canvas.draw_idle()

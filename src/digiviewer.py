@@ -89,14 +89,14 @@ class DigiApp(tk.Frame):
         Digitizer(self.dpath, self.savepath)
 
     def start_multip_thread(self, threadnm):
+
+        self.g_thread = threading.Thread(target=self.digitize_sp)
         if self.data:
             self.messagebox = tk.messagebox.askquestion("Digitize", "Spectra already digitized, digitize again? ", icon = 'warning')
 
             if self.messagebox == "yes":
                 self.threadnm = threadnm
-                if threadnm == "digi":
-                    self.g_thread = threading.Thread(target=self.digitize_sp)
-                    self.dbutton['state'] = tk.DISABLED
+                self.dbutton['state'] = tk.DISABLED
                 self.g_thread.daemon = True
                 self.progressbar.start()
                 self.g_thread.start()
@@ -104,13 +104,12 @@ class DigiApp(tk.Frame):
             else:
                 self.populate_list(self.dpath)
         else:
-                self.threadnm = threadnm
-                if threadnm == "digi":
-                    self.g_thread = threading.Thread(target=self.digitize_sp)
-                    self.dbutton['state'] = tk.DISABLED
-                self.g_thread.daemon = True
-                self.progressbar.start()
-                self.g_thread.start()
+            self.threadnm = threadnm
+            self.dbutton['state'] = tk.DISABLED
+            self.g_thread.daemon = True
+            self.progressbar.start()
+            self.g_thread.start()
+            self.parent.after(20, self.check_g_thread)
 
     def check_g_thread(self):
         if self.g_thread.is_alive():
@@ -121,6 +120,8 @@ class DigiApp(tk.Frame):
 
     def populate_list(self,dpath):
 
+        jsparser = JsonParser(self.savepath,[])
+        self.data = jsparser.read_json('spectra_file.json')
         self.threadnm = "digi"
         if self.threadnm == "digi":
             self.spectralist.delete(0,tk.END)
