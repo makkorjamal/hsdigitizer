@@ -37,7 +37,7 @@ def imputate_nan(sp_file):
 
 
 if __name__ == "__main__":
-    print(read_spectra(os.path.join('data/','all.dat')))
+    print(read_spectra(os.path.join('data/','spc.all.01.01.final')))
     # image_slicer.slice(os.path.join('images/','sroll_17_avril.tif' ), row = 1, col = 6, save = True , DecompressionBombWarning=False)
     # print(create_sprange(3249, 3565, 7))
 
