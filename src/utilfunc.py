@@ -8,14 +8,19 @@ from itertools import product
 import glob
 
 def read_spectra(filename, sp_range = []):
-    file = np.loadtxt(filename, skiprows = 2)
-    wavelength = np.linspace(3200, 3599, len(file))
-    spectra = np.array([wavelength, file])
-    spectra = spectra.T
+    # file = np.genfromtxt(filename)
+    with open(filename) as f:
+        lines = f.readlines()
+        print(lines[0])
+    sec_line = np.fromstring(lines[1], dtype = np.float16, sep = '\t')
+    sec_line = sec_line.astype(np.float)
+    spec = np.array(lines[2:])
+    spec = spec.astype(np.float)
+
+    wavelength = np.linspace(sec_line[0], sec_line[1], int(sec_line[3]))
     datafile = os.path.join('data/', 'simulated.dat')
     with open(datafile, 'w+') as datafile_id:
-        np.savetxt(datafile_id, spectra )
-    return spectra
+        np.savetxt(datafile_id,list(zip(wavelength,spec)))
     
 def create_sprange(sp_min, sp_max,nm_sp):
     c = []
@@ -37,7 +42,7 @@ def imputate_nan(sp_file):
 
 
 if __name__ == "__main__":
-    print(read_spectra(os.path.join('data/','spc.all.01.01.final')))
+    read_spectra(os.path.join('data/','spc.all.01.01.final_'))
     # image_slicer.slice(os.path.join('images/','sroll_17_avril.tif' ), row = 1, col = 6, save = True , DecompressionBombWarning=False)
     # print(create_sprange(3249, 3565, 7))
 

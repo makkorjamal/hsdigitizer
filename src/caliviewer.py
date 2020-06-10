@@ -30,7 +30,7 @@ class CaliApp(tk.Frame):
         self.plotframe.grid(row = 0, column = 0)
         screen_dpi = 200 
         self.parent.update()
-        plot_width = int(0.9*(self.parent.winfo_width()/screen_dpi))
+        plot_width = int(0.83*(self.parent.winfo_width()/screen_dpi))
         plot_height =int( 0.9*(self.parent.winfo_height()/screen_dpi))
         fig = Figure(figsize=(plot_width, plot_height), dpi=screen_dpi)
         # t = np.arange(0, 3, .01)
@@ -74,6 +74,11 @@ class CaliApp(tk.Frame):
         self.vscale_var.set(50)
         self.vscaler = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.vscale_var, orient=tk.VERTICAL, length= 300)
         self.vscaler.grid(row = 0, column = 1)
+
+        self.vscale_var_p = tk.DoubleVar()
+        self.vscale_var_p.set(50)
+        self.vscaler_p = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.vscale_var_p, orient=tk.VERTICAL, length= 300)
+        self.vscaler_p.grid(row = 0, column = 2)
        #Quit 
         self.qbutton = tk.Button(self.commandframe, text = "Quit", command = self.quit, padx = 5, pady = 4, font = ("Helvetica", 16))
         self.qbutton.grid(row = 0, column = 3)
@@ -129,6 +134,10 @@ class CaliApp(tk.Frame):
             if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
+            self.hscale_var.set(int(self.sp_range[1]))
+            self.vscale_var_p.set(50)
+            self.vscale_var.set(50)
+            self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1])
 
     def plot_spectra(self):
         #get selected spectra and plot
@@ -143,11 +152,10 @@ class CaliApp(tk.Frame):
                 self.fax.clear()
 
             self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
-            self.hscale_var.set( self.sp_range[1])
-            self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1])
             self.line, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
-            self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3, label = 'Simulated')
-            self.fax.legend()
+            # self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
+            # self.fax.legend([ 'Simulated' ], loc = 'upper right')
+            self.ax.legend([ 'Measured' ], loc = 'lower right')
             self.canvas.draw()
         except FileNotFoundError:
             print('File not found')
@@ -156,8 +164,9 @@ class CaliApp(tk.Frame):
         if self.threadnm == "cali":
             hscale_value = self.hscaler.get()
             vscale_value = self.vscaler.get()
-            x_vals =  self.x_vals * (hscale_value/self.sp_range[1])
-            y_vals = self.spectrum * (vscale_value/50)
+            vscale_value_p = self.vscaler_p.get()
+            x_vals =  self.x_vals * (hscale_value/((self.sp_range[0] + self.sp_range[1])/2))
+            y_vals = self.spectrum * (vscale_value/50) + (vscale_value_p/50)
             self.line.set_xdata(x_vals)
             self.line.set_ydata(y_vals)
             self.canvas.draw_idle()
