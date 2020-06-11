@@ -7,7 +7,7 @@ from itertools import product
 
 import glob
 
-def read_spectra(filename, sp_range = []):
+def read_spectra(filename):
     # file = np.genfromtxt(filename)
     with open(filename) as f:
         lines = f.readlines()
@@ -42,7 +42,7 @@ def imputate_nan(sp_file):
 
 
 if __name__ == "__main__":
-    read_spectra(os.path.join('data/','spc.all.01.01.final_'))
+    read_spectra(os.path.join('data/','spc.all.01.01.final'))
     # image_slicer.slice(os.path.join('images/','sroll_17_avril.tif' ), row = 1, col = 6, save = True , DecompressionBombWarning=False)
     # print(create_sprange(3249, 3565, 7))
 

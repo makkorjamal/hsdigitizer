@@ -153,8 +153,8 @@ class CaliApp(tk.Frame):
 
             self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
             self.line, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
-            # self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
-            # self.fax.legend([ 'Simulated' ], loc = 'upper right')
+            self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
+            self.fax.legend([ 'Simulated' ], loc = 'upper right')
             self.ax.legend([ 'Measured' ], loc = 'lower right')
             self.canvas.draw()
         except FileNotFoundError:
