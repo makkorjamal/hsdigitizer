@@ -121,7 +121,10 @@ class DigiApp(tk.Frame):
     def populate_list(self,dpath):
 
         jsparser = JsonParser(self.savepath,[])
-        self.data = jsparser.read_json('spectra_file.json')
+        try:
+            self.data = jsparser.read_json('spectra_file.json')
+        except FileNotFoundError:
+            self.data = []
         self.threadnm = "digi"
         if self.threadnm == "digi":
             self.spectralist.delete(0,tk.END)

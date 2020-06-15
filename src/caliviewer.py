@@ -187,8 +187,8 @@ class CaliApp(tk.Frame):
             self.canvas.draw()
         if (self.checkvar1.get()==1) & (self.checkvar2.get()==1):
             print("both")
-            self.faxline.set_xdata(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])])
-            self.faxline.set_ydata(self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )])
+            self.faxline.set_xdata(self.ftir_wv[( self.ftir_wv>=self.sp_range[0] ) & ( self.ftir_wv<=self.sp_range[1])])
+            self.faxline.set_ydata(self.ftir_in[( self.ftir_wv<=self.sp_range[1]) & ( self.ftir_wv>=self.sp_range[0] )])
             self.canvas.draw_idle()
 
             self.axline.set_xdata(self.x_vals)

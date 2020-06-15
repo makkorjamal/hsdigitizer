@@ -40,3 +40,6 @@ def imputate_nan(sp_file):
     imp.fit(newfile)
     imputated_file = imp.transform(newfile)
     return (imputated_file.flatten())
+if __name__=="__main__":
+    image_slicer.slice( "images/sroll_17_avril.tif", col=6, row=1, save=True, DecompressionBombWarning=False)
+    
