@@ -1,4 +1,5 @@
 # import image_slicer
+from vassal.terminal import Terminal
 import image_slicer 
 from sklearn.impute import SimpleImputer
 import numpy as np
@@ -39,10 +40,3 @@ def imputate_nan(sp_file):
     imp.fit(newfile)
     imputated_file = imp.transform(newfile)
     return (imputated_file.flatten())
-
-
-if __name__ == "__main__":
-    read_spectra(os.path.join('data/','spc.all.01.01.final'))
-    # image_slicer.slice(os.path.join('images/','sroll_17_avril.tif' ), row = 1, col = 6, save = True , DecompressionBombWarning=False)
-    # print(create_sprange(3249, 3565, 7))
-

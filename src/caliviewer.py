@@ -70,14 +70,19 @@ class CaliApp(tk.Frame):
         self.hscaler = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.hscale_var, orient=tk.HORIZONTAL, length= 300)
         self.hscaler.grid(row = 1, column = 0)
 
+        self.hscale_var_p = tk.DoubleVar()
+        self.hscale_var_p.set(50)
+        self.hscaler_p = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.hscale_var_p, orient=tk.HORIZONTAL, length= 300)
+        self.hscaler_p.grid(row = 2, column = 0)
+
         self.vscale_var = tk.DoubleVar()
         self.vscale_var.set(50)
-        self.vscaler = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.vscale_var, orient=tk.VERTICAL, length= 300)
+        self.vscaler = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.vscale_var, orient=tk.VERTICAL, length= 300, resolution = 0.1)
         self.vscaler.grid(row = 0, column = 1)
 
         self.vscale_var_p = tk.DoubleVar()
-        self.vscale_var_p.set(50)
-        self.vscaler_p = tk.Scale(self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.vscale_var_p, orient=tk.VERTICAL, length= 300)
+        self.vscale_var_p.set(0)
+        self.vscaler_p = tk.Scale(self.plotframe, from_=50, to=-50, command=self.scaleSpectra, variable=self.vscale_var_p, orient=tk.VERTICAL, length= 300, resolution = 0.1)
         self.vscaler_p.grid(row = 0, column = 2)
        #Quit 
         self.qbutton = tk.Button(self.commandframe, text = "Quit", command = self.quit, padx = 5, pady = 4, font = ("Helvetica", 16))
@@ -85,6 +90,14 @@ class CaliApp(tk.Frame):
         #Progress
         self.progressbar = ttk.Progressbar(self.commandframe, mode='indeterminate')
         self.progressbar.grid(column=4, row=0, sticky=tk.W)
+        self.checkframe = tk.LabelFrame(self.commandframe, padx=5, pady=5)
+        self.checkframe.grid(row=0, column=5)
+        self.checkvar1 = tk.IntVar()
+        self.checkvar2 = tk.IntVar()
+        self.simulated_checkbtn = tk.Checkbutton(self.checkframe, text='Simulated',variable=self.checkvar1, onvalue=1, offvalue=0, command=self.show_selected)
+        self.simulated_checkbtn.pack()
+        self.meassured_checkbtn = tk.Checkbutton(self.checkframe, text='Measured',variable=self.checkvar2, onvalue=1, offvalue=0, command=self.show_selected) 
+        self.meassured_checkbtn.pack()
     def quit(self):
         self.parent.quit()     # stops mainloop
         self.parent.destroy()  # this is necessary on Windows to prevent
@@ -134,10 +147,9 @@ class CaliApp(tk.Frame):
             if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
-            self.hscale_var.set(int(self.sp_range[1]))
-            self.vscale_var_p.set(50)
-            self.vscale_var.set(50)
-            self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1])
+            self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.05)
+            self.mean_wv = (self.sp_range[0]+self.sp_range[1])/2
+            self.hscale_var.set(int(self.mean_wv))
 
     def plot_spectra(self):
         #get selected spectra and plot
@@ -152,23 +164,48 @@ class CaliApp(tk.Frame):
                 self.fax.clear()
 
             self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
-            self.line, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
-            self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
+            self.axline, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
+            self.faxline, =self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
             self.fax.legend([ 'Simulated' ], loc = 'upper right')
             self.ax.legend([ 'Measured' ], loc = 'lower right')
             self.canvas.draw()
         except FileNotFoundError:
             print('File not found')
+    def show_selected(self):
+        if (self.checkvar1.get()==1) & (self.checkvar2.get()==0):
+            print("Simulated")
+            self.ax.plot([],[])
+            self.faxline.set_xdata(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])])
+            self.faxline.set_ydata(self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )])
+            self.canvas.draw()
+
+        if (self.checkvar1.get()==0) & (self.checkvar2.get()==1):
+            print("measured")
+            self.fax.plot([],[])
+            self.axline.set_xdata(self.x_vals)
+            self.axline.set_ydata(self.spectrum)
+            self.canvas.draw()
+        if (self.checkvar1.get()==1) & (self.checkvar2.get()==1):
+            print("both")
+            self.faxline.set_xdata(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])])
+            self.faxline.set_ydata(self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )])
+            self.canvas.draw_idle()
+
+            self.axline.set_xdata(self.x_vals)
+            self.axline.set_ydata(self.spectrum)
+            self.canvas.draw_idle()
+
+
 
     def scaleSpectra(self, dummy):
         if self.threadnm == "cali":
             hscale_value = self.hscaler.get()
             vscale_value = self.vscaler.get()
             vscale_value_p = self.vscaler_p.get()
-            x_vals =  self.x_vals * (hscale_value/((self.sp_range[0] + self.sp_range[1])/2))
+            x_vals =  self.x_vals * (hscale_value/self.mean_wv)
             y_vals = self.spectrum * (vscale_value/50) + (vscale_value_p/50)
-            self.line.set_xdata(x_vals)
-            self.line.set_ydata(y_vals)
+            self.axline.set_xdata(x_vals)
+            self.axline.set_ydata(y_vals)
             self.canvas.draw_idle()
         else:
             print("First plot spectra to scale")
