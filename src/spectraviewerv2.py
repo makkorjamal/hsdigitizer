@@ -37,7 +37,7 @@ class MenuBar(tk.Menu):
     def quit(self):
         self.parent.quit()     # stops mainloop
         self.parent.destroy()  # this is necessary on Windows to prevent
-    
+
     def callback(self):
         print(  "Spectra Digitizer" )
 
@@ -56,7 +56,6 @@ class StatusBar(ttk.Frame):
         self.label.config(text="")
         self.label.update_idletasks()
 
-            
 class Application(ttk.Notebook):
     def __init__(self, root):
         ttk.Notebook.__init__(self, root)

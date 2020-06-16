@@ -1,4 +1,5 @@
 import threading
+from matplotlib.widgets import SpanSelector
 import tkinter as tk
 import os
 import ttk
@@ -26,17 +27,19 @@ class CaliApp(tk.Frame):
         self.dpath = ''
     
     def create_widgets(self):
-        self.plotframe= tk.LabelFrame(self, padx = 10, pady = 15)
+        self.plotframe= tk.LabelFrame(self, padx = 3, pady = 15)
         self.plotframe.grid(row = 0, column = 0)
         screen_dpi = 200 
         self.parent.update()
-        plot_width = int(0.83*(self.parent.winfo_width()/screen_dpi))
+        plot_width = int(0.80*(self.parent.winfo_width()/screen_dpi))
         plot_height =int( 0.9*(self.parent.winfo_height()/screen_dpi))
         fig = Figure(figsize=(plot_width, plot_height), dpi=screen_dpi)
         # t = np.arange(0, 3, .01)
-        self.ax = fig.add_subplot(111)
+        self.ax = fig.add_subplot(211)
+        self.mwax = fig.add_subplot(212)
         self.fax = self.ax.twinx()
-        self.ax.set_title("Calibrated Spectra")
+        self.ax.set_title("Calibrated Spectra",fontsize='x-small')
+        self.mwax.set_title("mWin Calibrated Spectra",fontsize='x-small')
         self.canvas = FigureCanvasTkAgg(fig, master=self.plotframe)
 
         self.canvas.draw()
@@ -148,8 +151,10 @@ class CaliApp(tk.Frame):
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
             self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.05)
+            self.hscaler_p.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.05)
             self.mean_wv = (self.sp_range[0]+self.sp_range[1])/2
             self.hscale_var.set(int(self.mean_wv))
+            self.hscale_var_p.set(int(self.mean_wv))
 
     def plot_spectra(self):
         #get selected spectra and plot
@@ -165,9 +170,13 @@ class CaliApp(tk.Frame):
 
             self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
             self.axline, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
+            self.mwaxline, = self.mwax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
             self.faxline, =self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
-            self.fax.legend([ 'Simulated' ], loc = 'upper right')
-            self.ax.legend([ 'Measured' ], loc = 'lower right')
+            self.fax.legend([ 'Simulated' ], loc = 'upper right', fontsize='xx-small')
+            self.ax.set_zorder(self.fax.get_zorder()+1)
+            self.ax.patch.set_visible(False)
+            self.span_select = SpanSelector(self.ax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
+            self.ax.legend([ 'Measured' ], loc = 'lower right', fontsize='xx-small')
             self.canvas.draw()
         except FileNotFoundError:
             print('File not found')
@@ -200,9 +209,10 @@ class CaliApp(tk.Frame):
     def scaleSpectra(self, dummy):
         if self.threadnm == "cali":
             hscale_value = self.hscaler.get()
+            hscale_value_p = self.hscaler_p.get()
             vscale_value = self.vscaler.get()
             vscale_value_p = self.vscaler_p.get()
-            x_vals =  self.x_vals * (hscale_value/self.mean_wv)
+            x_vals =  self.x_vals * (hscale_value/self.mean_wv) + hscale_value_p/self.mean_wv 
             y_vals = self.spectrum * (vscale_value/50) + (vscale_value_p/50)
             self.axline.set_xdata(x_vals)
             self.axline.set_ydata(y_vals)
@@ -211,7 +221,21 @@ class CaliApp(tk.Frame):
             print("First plot spectra to scale")
             print(self.hscaler.get())
 
+    def on_pltselect(self, wv_min, wv_max):
 
+        idxmin, idxmax = np.searchsorted(self.x_vals, (wv_min, wv_max))
+        idxmax = min(len(self.x_vals) - 1, idxmax)
+
+        mw_wv = self.x_vals[idxmin:idxmax]
+        mw_spec = self.spectrum[idxmin:idxmax]
+        self.mwaxline.set_data(mw_wv, mw_spec)
+        self.mwax.set_xlim(mw_wv[0], mw_wv[-1])
+        self.mwax.set_ylim(mw_spec.min(), mw_spec.max())
+        self.canvas.draw_idle()
+
+        # save
+        np.savetxt("MicroWindow_{}_{}.dat".format(wv_min,wv_max), np.c_[mw_wv, mw_spec])
+    
 if __name__ == "__main__":
     root = tk.Tk()
     width = root.winfo_screenwidth()

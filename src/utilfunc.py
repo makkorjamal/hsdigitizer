@@ -1,5 +1,4 @@
 # import image_slicer
-from vassal.terminal import Terminal
 import image_slicer 
 from sklearn.impute import SimpleImputer
 import numpy as np
