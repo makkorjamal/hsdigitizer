@@ -153,8 +153,8 @@ class CaliApp(tk.Frame):
             if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
-            self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.05)
-            self.hscaler_p.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.05)
+            self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.01)
+            self.hscaler_p.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.01)
             self.mean_wv = (self.sp_range[0]+self.sp_range[1])/2
             self.hscale_var.set(int(self.mean_wv))
             self.hscale_var_p.set(int(self.mean_wv))
@@ -170,7 +170,7 @@ class CaliApp(tk.Frame):
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
                 self.ax.clear()
                 self.fax.clear()
-
+                self.mwax.clear()
             self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
             self.axline, = self.ax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
             self.mwaxline, = self.mwax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
@@ -185,30 +185,26 @@ class CaliApp(tk.Frame):
             print('File not found')
     def show_selected(self):
         if (self.checkvar1.get()==1) & (self.checkvar2.get()==0):
-            print("Simulated")
-            self.ax.plot([],[])
-            self.faxline.set_xdata(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])])
-            self.faxline.set_ydata(self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )])
+            self.faxline.set_visible(True)
+            self.axline.set_visible(False)
             self.canvas.draw()
 
         if (self.checkvar1.get()==0) & (self.checkvar2.get()==1):
-            print("measured")
-            self.fax.plot([],[])
-            self.axline.set_xdata(self.x_vals)
-            self.axline.set_ydata(self.spectrum)
+
+            self.faxline.set_visible(False)
+            self.axline.set_visible(True)
             self.canvas.draw()
         if (self.checkvar1.get()==1) & (self.checkvar2.get()==1):
-            print("both")
-            self.faxline.set_xdata(self.ftir_wv[( self.ftir_wv>=self.sp_range[0] ) & ( self.ftir_wv<=self.sp_range[1])])
-            self.faxline.set_ydata(self.ftir_in[( self.ftir_wv<=self.sp_range[1]) & ( self.ftir_wv>=self.sp_range[0] )])
-            self.canvas.draw_idle()
 
-            self.axline.set_xdata(self.x_vals)
-            self.axline.set_ydata(self.spectrum)
-            self.canvas.draw_idle()
+            self.faxline.set_visible(True)
+            self.axline.set_visible(True)
+            self.canvas.draw()
 
+        if (self.checkvar1.get()==0) & (self.checkvar2.get()==0):
 
-
+            self.faxline.set_visible(False)
+            self.axline.set_visible(False)
+            self.canvas.draw()
     def scaleSpectra(self, dummy):
         if self.threadnm == "cali":
             hscale_value = self.hscaler.get()
