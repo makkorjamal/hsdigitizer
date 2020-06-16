@@ -36,10 +36,13 @@ class CaliApp(tk.Frame):
         fig = Figure(figsize=(plot_width, plot_height), dpi=screen_dpi)
         # t = np.arange(0, 3, .01)
         self.ax = fig.add_subplot(211)
+        self.ax.tick_params(labelsize=8)
         self.mwax = fig.add_subplot(212)
         self.fax = self.ax.twinx()
+        self.fax.tick_params(labelsize=8)
+        self.mwax.tick_params(labelsize=8)
         self.ax.set_title("Calibrated Spectra",fontsize='x-small')
-        self.mwax.set_title("mWin Calibrated Spectra",fontsize='x-small')
+        self.mwax.set_title("MicroWin",fontsize='x-small')
         self.canvas = FigureCanvasTkAgg(fig, master=self.plotframe)
 
         self.canvas.draw()
@@ -234,7 +237,7 @@ class CaliApp(tk.Frame):
         self.canvas.draw_idle()
 
         # save
-        np.savetxt("MicroWindow_{}_{}.dat".format(wv_min,wv_max), np.c_[mw_wv, mw_spec])
+        np.savetxt("microwindows/MicroWindow_{:.2f}_{:.2f}.dat".format(min(mw_wv),max(mw_wv)), np.c_[mw_wv, mw_spec], fmt='%1.2f %1.2f')
     
 if __name__ == "__main__":
     root = tk.Tk()
