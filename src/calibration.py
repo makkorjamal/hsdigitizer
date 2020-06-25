@@ -84,8 +84,8 @@ class Calibrator():
             ll = f.readlines()
         self.ax1_lines = [float(i.split()[0]) for i in ll]
         self.ax2_lines = [float(i.split()[1]) for i in ll]
-        # print(self.ax1_lines)
-        # print(self.ax2_lines)
+        print(self.ax1_lines)
+        print(self.ax2_lines)
         # print('Read calibration lines from', fname)
         self.calibrate(None)
     
@@ -111,7 +111,7 @@ class Calibrator():
         l2 = np.unique(np.array(self.ax2_lines))
         l1.sort()
         l2.sort()
-        f = lambda x, a,b: a*x+b
+        f = lambda x, a,b,c: a*x*x+b*x+c
         p, pcov = curve_fit(f, l2, l1)
         #print(p)
         #pdb.set_trace()

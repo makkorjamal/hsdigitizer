@@ -1,11 +1,15 @@
 # import image_slicer
+
+import matplotlib.pyplot as plt
+import glob
 import image_slicer 
 from sklearn.impute import SimpleImputer
 import numpy as np
 import os
 from itertools import product
-
+from scipy import signal
 import glob
+# def xcorrelate(measured, simulated):
 
 def read_spectra(filename):
     # file = np.genfromtxt(filename)
@@ -40,5 +44,24 @@ def imputate_nan(sp_file):
     imputated_file = imp.transform(newfile)
     return (imputated_file.flatten())
 if __name__=="__main__":
-    image_slicer.slice( "images/sroll_17_avril.tif", col=6, row=1, save=True, DecompressionBombWarning=False)
-    
+    # image_slicer.slice( "images/sroll_17_avril.tif", col=6, row=1, save=True, DecompressionBombWarning=False)
+    califiles = glob.glob('data/*calibrated.dat')
+    _cal = np.loadtxt(califiles[1], skiprows = 4)
+    _sim = np.recfromtxt('data/simulated.dat', names = ['wavel', 'spec'])
+    wv_rng = np.linspace(3249,3565,6)
+    wv_min = int(wv_rng[0])
+    wv_max = int(wv_rng[1])
+    wv = np.linspace(wv_min, wv_max, len(_cal))
+    sim_wv=_sim.wavel[( _sim.wavel > wv_min ) & ( _sim.wavel < wv_max )]
+    sim_sp = _sim.spec[(_sim.wavel > wv_min ) &  (_sim.wavel < wv_max )] 
+    plt.plot(sim_wv, sim_sp)
+    dx = np.mean(np.diff(sim_wv))
+    shift = (np.argmax(signal.correlate(sim_sp, _cal, method='fft')) - len(_cal)) * dx
+    print(signal.correlate(sim_sp, _cal, method='fft'))
+    print(np.argmax(signal.correlate(sim_sp, _cal, method='fft')))
+    print(shift)
+    plt.plot(wv + shift, _cal)
+    plt.show()
+
+
+
