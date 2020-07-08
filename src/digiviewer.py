@@ -45,6 +45,7 @@ class DigiApp(tk.Frame):
         self.canvas = FigureCanvasTkAgg(fig, master=self.plotframe)
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row = 0, column = 0)
+        self.cid = self.canvas.mpl_connect('Pick', lambda event: click_command(event.xdata, event.ydata))
         self.empty_vbl = tk.Label(self.plotframe, text = "", padx = 10)
         self.empty_vbl.grid(row = 0, column = 1)
         self.empty_hbl = tk.Label(self.plotframe, text = "", pady = 10)
