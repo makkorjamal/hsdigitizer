@@ -5,6 +5,8 @@ import tkinter as tk
 import os
 import ttk
 import config
+from scipy.signal import find_peaks
+from scipy.signal import savgol_filter, general_gaussian
 import numpy as np
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -42,12 +44,12 @@ class CaliApp(tk.Frame):
         self.ax = self.fig.add_subplot(211, picker=True)
         self.ax.tick_params(labelsize=8)
         self.mwax = self.fig.add_subplot(212, picker=True)
-        self.fax = self.ax.twinx()
-        self.fax.tick_params(labelsize=8)
+        # self.fax = self.ax.twinx()
+        # self.fax.tick_params(labelsize=8)
         self.mwax.tick_params(labelsize=8)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.plotframe)
         self.canvas.get_tk_widget().grid(row = 0, column = 0)
-        self.cid = self.canvas.mpl_connect('Pick', lambda event: click_command(event.xdata, event.ydata))
+        self.cid = self.canvas.mpl_connect('button_press_event', self.onclick)
         ####
         self.listframe = tk.LabelFrame(self, padx = 20, pady =16)
         self.listframe.grid(row = 0, column = 1)
@@ -65,7 +67,7 @@ class CaliApp(tk.Frame):
 
         self.commandframe = tk.LabelFrame(self, padx = 15, pady = 15)
         self.commandframe.grid(row = 1, column = 0)
-        self.cbutton = tk.Button(self.commandframe, text = "Calibrate", command = lambda: self.start_multip_thread("cali"), padx = 10, pady = 4, font = ("Helvetica", 16))
+        self.cbutton = tk.Button(self.commandframe, text = "Calibrate", command = self.calibrate_sp, padx = 10, pady = 4, font = ("Helvetica", 16))
         self.cbutton.grid(row = 0, column = 1)
 
        #Plot 
@@ -96,10 +98,18 @@ class CaliApp(tk.Frame):
         self.qbutton = tk.Button(self.commandframe, text = "Quit", command = self.quit, padx = 5, pady = 4, font = ("Helvetica", 16))
         self.qbutton.grid(row = 0, column = 3)
         #Progress
-        self.progressbar = ttk.Progressbar(self.commandframe, mode='indeterminate')
-        self.progressbar.grid(column=4, row=0, sticky=tk.W)
+        # self.progressbar = ttk.Progressbar(self.commandframe, mode='indeterminate')
+        # self.progressbar.grid(column=4, row=0, sticky=tk.W)
+        #peak finder frame
+        self.peakframe = tk.LabelFrame(self.commandframe, padx=5, pady=5)
+        self.peakframe.grid(row=0, column=5)
+        self.sbutton = tk.Button(self.peakframe, text = "Smooth", command = self.smooth_sp, padx = 5, pady = 4, font = ("Helvetica", 16))
+        self.sbutton.grid(row = 0, column = 0)
+        self.peakbutton = tk.Button(self.peakframe, text = "Peaks", command = self.find_peaks, padx = 5, pady = 4, font = ("Helvetica", 16))
+        self.peakbutton.grid(row = 1, column = 0)
+        #check spectra frame
         self.checkframe = tk.LabelFrame(self.commandframe, padx=5, pady=5)
-        self.checkframe.grid(row=0, column=5)
+        self.checkframe.grid(row=0, column=6)
         self.checkvar1 = tk.IntVar()
         self.checkvar1.set(1)
         self.checkvar2 = tk.IntVar()
@@ -113,8 +123,13 @@ class CaliApp(tk.Frame):
         self.parent.destroy()  # this is necessary on Windows to prevent
 
     def calibrate_sp(self):
+        cl_fname = os.path.join(self.savepath, '{}_{}'.format(self.sp_range[0], self.sp_range[1]) + '_cal_lines.dat')
+        with open(cl_fname, 'w') as f:
+            for i, j in zip(self.ax1_lines, self.ax2_lines):
+                f.write('%4.4f %4.4f\n'%(i,j))
 
-        Calibrator(self.savepath, self.savepath)
+        Calibrator(self.savepath, self.sp_digi, cl_fname)
+        self.threadnm = "cali"
 
     def start_multip_thread(self, threadnm):
 
@@ -123,7 +138,7 @@ class CaliApp(tk.Frame):
             self.g_thread = threading.Thread(target=self.calibrate_sp)
             self.cbutton['state'] = tk.DISABLED
         self.g_thread.daemon = True
-        self.progressbar.start()
+        # self.progressbar.start()
         self.g_thread.start()
         self.parent.after(20, self.check_g_thread)
 
@@ -131,7 +146,7 @@ class CaliApp(tk.Frame):
         if self.g_thread.is_alive():
             self.parent.after(20, self.check_g_thread)
         else:
-            self.progressbar.stop()
+            # self.progressbar.stop()
             self.populate_list()
 
     def populate_list(self):
@@ -191,15 +206,30 @@ class CaliApp(tk.Frame):
             self.ftir_in = self.ftir_sp.i
 
             self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_digi), skiprows=0)
-            self.ax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3, picker=True)
-            self.mwax.plot( self.spectrum, linewidth= 0.3, picker=True)
+            self.ax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
+            self.mwax.plot( self.spectrum, linewidth= 0.3)
             self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
             self.canvas.draw_idle()
         except FileNotFoundError:
             print("File Not found")
             
+    def smooth_sp(self):
+        window = 5
+        poly_order= 2
+        self.smoothed_sp = savgol_filter(self.spectrum, 6*window + 1, 5*poly_order, deriv=0)
+        self.mwax.clear()
+        self.mwax.plot(self.smoothed_sp, linewidth=0.3)
+        self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
+        self.canvas.draw_idle()
 
-
+    def find_peaks(self):
+        peaks, _ = find_peaks(self.smoothed_sp, prominence=500)
+        self.sx_vals = np.arange(len(self.smoothed_sp))
+        print(peaks)
+        lpeaks = peaks[ (peaks > np.min(self.ax2_lines)) & (peaks < np.max(self.ax2_lines)) ]
+        print(lpeaks)
+        self.mwax.plot(lpeaks, self.smoothed_sp[lpeaks], "xr")
+        self.canvas.draw_idle()
     def plot_spectra(self):
         if self.threadnm == "digi":
             self.populate_list()
@@ -212,16 +242,16 @@ class CaliApp(tk.Frame):
                 self.ftir_in = self.ftir_sp.i
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
                 self.ax.clear()
-                self.fax.clear()
+                # self.fax.clear()
                 self.mwax.clear()
                 self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
                 self.axline, = self.ax.plot(self.x_vals,self.spectrum, picker=5, linewidth = 0.3)
                 self.ax.set_ylabel('I', picker=True, bbox=dict(facecolor='red'))
                 self.mwaxline, = self.mwax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
-                self.faxline, =self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
-                self.fax.legend([ 'Simulated' ], loc = 'upper right', fontsize='xx-small')
-                self.ax.set_zorder(self.fax.get_zorder()+1)
-                self.ax.patch.set_visible(False)
+                # self.faxline, =self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
+                # self.fax.legend([ 'Simulated' ], loc = 'upper right', fontsize='xx-small')
+                # self.ax.set_zorder(self.fax.get_zorder()+1)
+                # self.ax.patch.set_visible(False)
                 self.span_select = SpanSelector(self.ax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
                 self.ax.legend([ 'Measured' ], loc = 'lower right', fontsize='xx-small')
                 self.canvas.draw()
@@ -229,53 +259,46 @@ class CaliApp(tk.Frame):
                 print('File not found')
     def show_selected(self):
         if (self.checkvar1.get()==1) & (self.checkvar2.get()==0):
-            self.faxline.set_visible(True)
+            # self.faxline.set_visible(True)
             self.axline.set_visible(False)
             self.canvas.draw()
 
         if (self.checkvar1.get()==0) & (self.checkvar2.get()==1):
 
-            self.faxline.set_visible(False)
+            # self.faxline.set_visible(False)
             self.axline.set_visible(True)
             self.canvas.draw()
         if (self.checkvar1.get()==1) & (self.checkvar2.get()==1):
 
-            self.faxline.set_visible(True)
+            # self.faxline.set_visible(True)
             self.axline.set_visible(True)
             self.canvas.draw()
 
         if (self.checkvar1.get()==0) & (self.checkvar2.get()==0):
 
-            self.faxline.set_visible(False)
+            # self.faxline.set_visible(False)
             self.axline.set_visible(False)
             self.canvas.draw()
 
     def plotlines(self):
-        self.ax1l = self.ax.vlines(self.ax1_lines, 0,1)
-        self.ax2l = self.mwax.vlines(self.ax2_lines, 0,1)
+        self.ax1l = self.ax.vlines(self.ax1_lines, 0,1, linestyles = 'dotted')
+        self.ax2l = self.mwax.vlines(self.ax2_lines, 0,1, linestyles = 'dotted')
         self.canvas.draw_idle()
-
-    def on_pick(self,event):
-        print('you picked:',event.artist)
 
     def onclick(self, event):
         if event.dblclick:
             if event.inaxes==self.ax:
                 self.ax1_lines.append(event.xdata)
+                self.ax1l = self.ax.vlines(self.ax1_lines, 0,1, linestyles = 'dotted')
+                self.canvas.draw_idle()
             elif event.inaxes==self.mwax:
                 self.ax2_lines.append(event.xdata)
+                self.ax2l = self.mwax.vlines(self.ax2_lines, 0,1, linestyles = 'dotted')
+                self.canvas.draw_idle()
             else:
                 pass
             print(self.ax1_lines, self.ax2_lines)
-            self.plotlines()
-    def onpick_ax(self, event):
-        if isinstance(event.artist, Line2D):
-            thisline = event.artist
-            xdata = thisline.get_xdata()
-            ydata = thisline.get_ydata()
-            ind = event.ind
-            print ( 'X='+str(np.take(xdata, ind)[0]) ) # Print X point
-            print ( 'Y='+str(np.take(ydata, ind)[0]) ) # Print Y point
+            # self.plotlines()
 
     def scaleSpectra(self, dummy):
         if self.threadnm == "cali":

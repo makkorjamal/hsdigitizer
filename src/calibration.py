@@ -41,31 +41,21 @@ class Calibrator():
         json_parser = JsonParser(self.savepath,self.spectrums)
         json_parser.save_json()
 
-    def save_data(self,digitized_sp):
-        self.fname = digitized_sp
-        # print('Reading ', os.path.join(self.path, self.fname), '...')
-        self.dta = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
+    def save_data(self):
         self.dta = imputate_nan(self.dta)
         self.y = self.dta*(-1)+np.max(self.dta)
         self.yoffset = 0
         self.y2 =( self.y-self.yoffset)/np.max(self.y-self.yoffset)
         self.x2 = np.arange(len(self.y2))
-        # print('Setting initial spectral range to: ', self.s, '--', self.e, '...')
-        #
         self.ax1_lines, self.ax2_lines = [], []
-        self.read_cali_lines()
+        self.read_cali_lines(self.cal_lines)
         self.reduce_points(None)
-        return self.print_sfit_readable_spectrum(None)
+        self.print_sfit_readable_spectrum(None)
 
     def print_sfit_readable_spectrum(self,event, sza=63.0, latlon=(46.55, 7.98), d=dt.datetime(1951, 4, 15, 7, 30, 0), res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
         spc = self.yreduced
         wvn_bounds = [np.min(self.xcal), np.max(self.xcal)]
-        cl_fname = os.path.join(self.path, self.fname[:-4]+'_cal_lines.dat')
-        with open(cl_fname, 'w') as f:
-            for i, j in zip(self.ax1_lines, self.ax2_lines):
-                f.write('%4.4f %4.4f\n'%(i,j))
-        # print('Wrote file', cl_fname)
-        c_fname = os.path.join(self.path, self.fname[:-4].replace("_digitized", "")+'_calibrated.dat')
+        c_fname = os.path.join(self.cal_lines.replace( '_cal_lines.dat', 'calibrated.dat'))
         #pdb.set_trace()
         s = ' %4.2f  %8.4f  %4.2f  %5.2f  %5i\n'%(sza, rearth, latlon[0], latlon[1] , sn)
         s = s + d.strftime(' %Y %m %d %H %M %S\n')
@@ -76,10 +66,10 @@ class Calibrator():
         with open(c_fname, 'w') as f:
             f.write(s)
         # print('Wrote file', c_fname)
-        return [c_fname.replace(self.savepath, ""), cl_fname.replace(self.savepath,"")]
+        return c_fname.replace(self.savepath, "")
     
-    def read_cali_lines(self):
-        fname = os.path.join(self.path, 'cal_lines.dat')
+    def read_cali_lines(self, cal_lines):
+        fname = os.path.join(cal_lines)
         with open(fname, 'r') as f:
             ll = f.readlines()
         self.ax1_lines = [float(i.split()[0]) for i in ll]
@@ -118,15 +108,12 @@ class Calibrator():
         # valid = ~(np.isnan(self.x2))
         self.xcal = f(self.x2, *p)
 
-    def __init__(self, dpath, savepath):
-        self.path = dpath
+    def __init__(self, savepath, digitized_sp, cal_lines):
         self.savepath = savepath
-        # self.save_data(os.path.join('14065069_digitized.dat'))
-        self.parallelize()
-        # d = np.recfromtxt('data/S16428AC_025_trian_zf2.dpt', names=['w', 'i'], encoding='utf8')
-        # self.x1 = d.w
-        # self.y1 = d.i
-
+        self.cal_lines = cal_lines
+        self.digitized_sp = digitized_sp
+        self.dta = np.recfromtxt(os.path.join(self.savepath, self.digitized_sp), encoding='utf8')
+        self.save_data()
 
 if __name__ == '__main__':
     #if len(sys.argv)==2:
