@@ -3,9 +3,13 @@ import threading
 from matplotlib.widgets import SpanSelector
 import tkinter as tk
 import os
+from sklearn.linear_model import LinearRegression
 import ttk
 import config
+import matplotlib.gridspec as gridspec
 from scipy.signal import find_peaks
+from scipy.signal import detrend
+
 from scipy.signal import savgol_filter, general_gaussian
 import numpy as np
 from matplotlib.backends.backend_tkagg import (
@@ -31,6 +35,8 @@ class CaliApp(tk.Frame):
         self.threadnm = "digi"
         self.ax1_lines = []
         self.ax2_lines = []
+        self.cal_wv = []
+        self.cal_pix = []
 
     def create_widgets(self):
         self.plotframe= tk.LabelFrame(self, padx = 3, pady = 15)
@@ -40,10 +46,13 @@ class CaliApp(tk.Frame):
         plot_width = int(0.80*(self.parent.winfo_width()/screen_dpi))
         plot_height =int( 0.9*(self.parent.winfo_height()/screen_dpi))
         self.fig = Figure(figsize=(plot_width, plot_height), dpi=screen_dpi)
-        # t = np.arange(0, 3, .01)
-        self.ax = self.fig.add_subplot(211, picker=True)
+        gs = gridspec.GridSpec(nrows=4, ncols=4, figure=self.fig)
+
+        self.ax = self.fig.add_subplot(gs[0:2,:-1], picker=True)
+        self.calax = self.fig.add_subplot(gs[1:3, 3:4])
+        self.calax.tick_params(labelsize=3)
         self.ax.tick_params(labelsize=8)
-        self.mwax = self.fig.add_subplot(212, picker=True)
+        self.mwax = self.fig.add_subplot(gs[2:4,:-1], picker=True)
         # self.fax = self.ax.twinx()
         # self.fax.tick_params(labelsize=8)
         self.mwax.tick_params(labelsize=8)
@@ -204,32 +213,41 @@ class CaliApp(tk.Frame):
             self.ftir_sp = np.recfromtxt('data/simulated.dat', names=['w', 'i'], encoding='utf8')
             self.ftir_wv = self.ftir_sp.w
             self.ftir_in = self.ftir_sp.i
+            self.selectedftir_wv = self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])]
+            self.selectedftir_in = self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )] 
 
             self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_digi), skiprows=0)
-            self.ax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
-            self.mwax.plot( self.spectrum, linewidth= 0.3)
-            self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
+            self.spectrum = self.spectrum*(-1) + np.max(self.spectrum)
+            self.ax.plot(self.selectedftir_in, 'r', linewidth = 0.3)
+            self.mwax.plot( np.arange(len(self.spectrum)), self.spectrum, linewidth= 0.3)
+            # self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
             self.canvas.draw_idle()
         except FileNotFoundError:
             print("File Not found")
-            
+
     def smooth_sp(self):
         window = 5
         poly_order= 2
         self.smoothed_sp = savgol_filter(self.spectrum, 6*window + 1, 5*poly_order, deriv=0)
         self.mwax.clear()
         self.mwax.plot(self.smoothed_sp, linewidth=0.3)
-        self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
+        # self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
         self.canvas.draw_idle()
 
     def find_peaks(self):
-        peaks, _ = find_peaks(self.smoothed_sp, prominence=500)
-        self.sx_vals = np.arange(len(self.smoothed_sp))
-        print(peaks)
-        lpeaks = peaks[ (peaks > np.min(self.ax2_lines)) & (peaks < np.max(self.ax2_lines)) ]
-        print(lpeaks)
-        self.mwax.plot(lpeaks, self.smoothed_sp[lpeaks], "xr")
+        digi_peaks, _ = find_peaks(self.smoothed_sp, prominence=400)
+        sim_peaks, _ = find_peaks(self.selectedftir_in, prominence=0.2)
+        ldigi_peaks = digi_peaks[ (digi_peaks > np.min(self.ax2_lines)) & (digi_peaks < np.max(self.ax2_lines)) ]
+        lsim_peaks = sim_peaks[ (sim_peaks > np.min(self.ax1_lines)) & (sim_peaks < np.max(self.ax1_lines)) ]
+        [self.cal_wv.append(self.selectedftir_wv[i]) for i in lsim_peaks]
+        self.mwax.plot(ldigi_peaks, self.smoothed_sp[ldigi_peaks], "xr")
+        self.ax.plot(lsim_peaks, self.selectedftir_in[lsim_peaks], "xb")
+        y = detrend(lsim_peaks)
+        print(lsim_peaks)
+        print(y)
+        self.calax.scatter(ldigi_peaks, self.cal_wv, marker= '.')
         self.canvas.draw_idle()
+
     def plot_spectra(self):
         if self.threadnm == "digi":
             self.populate_list()
