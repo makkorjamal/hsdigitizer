@@ -134,10 +134,10 @@ class CaliApp(tk.Frame):
     def calibrate_sp(self):
         cl_fname = os.path.join(self.savepath, '{}_{}'.format(self.sp_range[0], self.sp_range[1]) + '_cal_lines.dat')
         with open(cl_fname, 'w') as f:
-            for i, j in zip(self.ax1_lines, self.ax2_lines):
+            for i, j in zip(self.cal_pix, self.cal_wv):
                 f.write('%4.4f %4.4f\n'%(i,j))
 
-        Calibrator(self.savepath, self.sp_digi, cl_fname)
+        Calibrator(self.savepath, self.spectrum, cl_fname)
         self.threadnm = "cali"
 
     def start_multip_thread(self, threadnm):
@@ -209,6 +209,7 @@ class CaliApp(tk.Frame):
     def ini_plot(self):
         self.threadnm = "digi"
         self.mwax.clear()
+        self.ax.clear()
         try:
             self.ftir_sp = np.recfromtxt('data/simulated.dat', names=['w', 'i'], encoding='utf8')
             self.ftir_wv = self.ftir_sp.w
@@ -235,11 +236,12 @@ class CaliApp(tk.Frame):
         self.canvas.draw_idle()
 
     def find_peaks(self):
-        digi_peaks, _ = find_peaks(self.smoothed_sp, prominence=400)
-        sim_peaks, _ = find_peaks(self.selectedftir_in, prominence=0.2)
+        digi_peaks, _ = find_peaks(self.smoothed_sp, prominence=500)
+        sim_peaks, _ = find_peaks(self.selectedftir_in, prominence=0.3)
         ldigi_peaks = digi_peaks[ (digi_peaks > np.min(self.ax2_lines)) & (digi_peaks < np.max(self.ax2_lines)) ]
         lsim_peaks = sim_peaks[ (sim_peaks > np.min(self.ax1_lines)) & (sim_peaks < np.max(self.ax1_lines)) ]
         [self.cal_wv.append(self.selectedftir_wv[i]) for i in lsim_peaks]
+        self.cal_pix = ldigi_peaks
         self.mwax.plot(ldigi_peaks, self.smoothed_sp[ldigi_peaks], "xr")
         self.ax.plot(lsim_peaks, self.selectedftir_in[lsim_peaks], "xb")
         y = detrend(lsim_peaks)

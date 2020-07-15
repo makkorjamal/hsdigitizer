@@ -16,41 +16,41 @@ from itertools import zip_longest
 
 class Calibrator():
 
-    def parallelize(self):
-        jsparser = JsonParser(self.savepath,[])
-        self.data = jsparser.read_json('spectra_file.json')
-        self.spectrums = []
-        tmp_img_names = []
-        tmp_sp_names = []
-        tmp_sp_ranges = create_sprange(3249, 3565, 6)
-        tmp_calsp_names = []
-        tmp_calsplines_names = []
+    # def parallelize(self):
+    #     jsparser = JsonParser(self.savepath,[])
+    #     self.data = jsparser.read_json('spectra_file.json')
+    #     self.spectrums = []
+    #     tmp_img_names = []
+    #     tmp_sp_names = []
+    #     tmp_sp_ranges = create_sprange(3249, 3565, 6)
+    #     tmp_calsp_names = []
+    #     tmp_calsplines_names = []
 
 
-        sp_names = []
-        for dd in self.data:
-            tmp_img_names.append(dd.img_name)
-            tmp_sp_names.append(dd.sp_name)
-            tmp_sp_ranges.append(dd.sp_range)
+#         sp_names = []
+#         for dd in self.data:
+#             tmp_img_names.append(dd.img_name)
+#             tmp_sp_names.append(dd.sp_name)
+#             tmp_sp_ranges.append(dd.sp_range)
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
-            for names in executor.map(self.save_data,tmp_sp_names):
-                tmp_calsplines_names.append(names[1])
-                tmp_calsp_names.append(names[0])
-        self.spectrums = [Spectrum(tmp_img_name, tmp_sp_name, tmp_calsp_name, tmp_calsplines_name, tmp_sp_range) for tmp_img_name, tmp_sp_name, tmp_calsp_name, tmp_calsplines_name , tmp_sp_range in zip_longest(tmp_img_names, tmp_sp_names, tmp_calsp_names, tmp_calsplines_names, tmp_sp_ranges)]
-        json_parser = JsonParser(self.savepath,self.spectrums)
-        json_parser.save_json()
+        # with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
+        #     for names in executor.map(self.save_data,tmp_sp_names):
+        #         tmp_calsplines_names.append(names[1])
+        #         tmp_calsp_names.append(names[0])
+        # self.spectrums = [Spectrum(tmp_img_name, tmp_sp_name, tmp_calsp_name, tmp_calsplines_name, tmp_sp_range) for tmp_img_name, tmp_sp_name, tmp_calsp_name, tmp_calsplines_name , tmp_sp_range in zip_longest(tmp_img_names, tmp_sp_names, tmp_calsp_names, tmp_calsplines_names, tmp_sp_ranges)]
+        # json_parser = JsonParser(self.savepath,self.spectrums)
+        # json_parser.save_json()
 
     def save_data(self):
-        self.dta = imputate_nan(self.dta)
-        self.y = self.dta*(-1)+np.max(self.dta)
+        self.y = self.digitized_sp.astype(float)
+        # self.y = self.dta*(-1)+np.max(self.dta)
         self.yoffset = 0
         self.y2 =( self.y-self.yoffset)/np.max(self.y-self.yoffset)
         self.x2 = np.arange(len(self.y2))
         self.ax1_lines, self.ax2_lines = [], []
         self.read_cali_lines(self.cal_lines)
-        self.reduce_points(None)
-        self.print_sfit_readable_spectrum(None)
+        # self.reduce_points(None)
+        # self.print_sfit_readable_spectrum(None)
 
     def print_sfit_readable_spectrum(self,event, sza=63.0, latlon=(46.55, 7.98), d=dt.datetime(1951, 4, 15, 7, 30, 0), res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
         spc = self.yreduced
@@ -83,8 +83,8 @@ class Calibrator():
 
         xo = self.xcal
         yo = self.y2
-        yo = yo[~np.isnan(yo)]
-        xo = xo[~np.isnan(xo)]
+        # yo = yo[~np.isnan(yo)]
+        # xo = xo[~np.isnan(xo)]
         yn = []
         xmin, xmax = np.min(self.xcal), np.max(self.xcal)
         xn = np.linspace(xmin, xmax, int((xmax-xmin)/res))
@@ -107,12 +107,13 @@ class Calibrator():
         #pdb.set_trace()
         # valid = ~(np.isnan(self.x2))
         self.xcal = f(self.x2, *p)
+        print(self.xcal)
 
     def __init__(self, savepath, digitized_sp, cal_lines):
         self.savepath = savepath
         self.cal_lines = cal_lines
         self.digitized_sp = digitized_sp
-        self.dta = np.recfromtxt(os.path.join(self.savepath, self.digitized_sp), encoding='utf8')
+        # self.dta = np.recfromtxt(os.path.join(self.savepath, self.digitized_sp), encoding='utf8')
         self.save_data()
 
 if __name__ == '__main__':
