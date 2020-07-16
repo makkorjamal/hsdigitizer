@@ -9,7 +9,7 @@ import config
 import matplotlib.gridspec as gridspec
 from scipy.signal import find_peaks
 from scipy.signal import detrend
-
+from sklearn.linear_model import LinearRegression
 from scipy.signal import savgol_filter, general_gaussian
 import numpy as np
 from matplotlib.backends.backend_tkagg import (
@@ -229,7 +229,7 @@ class CaliApp(tk.Frame):
     def smooth_sp(self):
         window = 5
         poly_order= 2
-        self.smoothed_sp = savgol_filter(self.spectrum, 6*window + 1, 5*poly_order, deriv=0)
+        self.smoothed_sp = savgol_filter(self.spectrum, 6*window + 1, poly_order, deriv=0)
         self.mwax.clear()
         self.mwax.plot(self.smoothed_sp, linewidth=0.3)
         # self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
@@ -243,11 +243,15 @@ class CaliApp(tk.Frame):
         [self.cal_wv.append(self.selectedftir_wv[i]) for i in lsim_peaks]
         self.cal_pix = ldigi_peaks
         self.mwax.plot(ldigi_peaks, self.smoothed_sp[ldigi_peaks], "xr")
-        self.ax.plot(lsim_peaks, self.selectedftir_in[lsim_peaks], "xb")
-        y = detrend(lsim_peaks)
-        print(lsim_peaks)
-        print(y)
-        self.calax.scatter(ldigi_peaks, self.cal_wv, marker= '.')
+        # self.ax.plot(lsim_peaks, self.selectedftir_in[lsim_peaks], "xb")
+        reg = LinearRegression().fit(ldigi_peaks.reshape(-1,1),lsim_peaks.reshape(-1,1) )
+        predicted_lsim = reg.predict(digi_peaks.reshape(-1,1))
+        predicted_lsim = predicted_lsim.astype(int)
+        self.ax.plot(predicted_lsim, self.selectedftir_in[predicted_lsim], "xb")
+        self.mwax.plot(digi_peaks, self.smoothed_sp[digi_peaks], "xr")
+        # self.calax.scatter(ldigi_peaks, self.cal_wv, marker= '.')
+        self.calax.scatter(ldigi_peaks, lsim_peaks, marker= 'o')
+        self.calax.scatter(digi_peaks, predicted_lsim, marker= '.')
         self.canvas.draw_idle()
 
     def plot_spectra(self):
