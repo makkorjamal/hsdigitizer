@@ -132,9 +132,10 @@ class CaliApp(tk.Frame):
         self.parent.destroy()  # this is necessary on Windows to prevent
 
     def calibrate_sp(self):
-        cl_fname = os.path.join(self.savepath, '{}_{}'.format(self.sp_range[0], self.sp_range[1]) + '_cal_lines.dat')
-        with open(cl_fname, 'w') as f:
-            for i, j in zip(self.cal_pix, self.cal_wv):
+        cl_fname = '{}_{}'.format(self.sp_range[0], self.sp_range[1]) + '_cal_lines.dat'
+        cl_path = os.path.join(self.savepath,cl_fname )
+        with open(cl_path, 'w') as f:
+            for i, j in zip(self.cal_wv, self.cal_pix):
                 f.write('%4.4f %4.4f\n'%(i,j))
 
         Calibrator(self.savepath, self.spectrum, cl_fname)
@@ -170,7 +171,6 @@ class CaliApp(tk.Frame):
             self.cbutton['state'] = tk.DISABLED
             for dx in self.data:
                 self.spectralist.insert(tk.END, dx.calsp_name)
-                print(dx.calsp_name)
             self.ax.clear()
             self.canvas.draw()
 
@@ -178,12 +178,10 @@ class CaliApp(tk.Frame):
             self.spectralist.delete(0,tk.END)
             for dx in self.data:
                 self.spectralist.insert(tk.END, dx.img_name)
-                # print(dx.sp_name)
 
     def on_list_select(self,event):
 
         self.active = self.spectralist.get(tk.ACTIVE)
-        print(self.active)
         if self.data:
             for od in self.data:
                 if self.active == od.calsp_name and self.threadnm == "cali":
@@ -192,7 +190,6 @@ class CaliApp(tk.Frame):
                 if self.active == od.img_name and self.threadnm == "digi":
                     self.sp_digi = od.sp_name
                     self.sp_range = od.sp_range
-                    print(self.sp_digi)
             if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
@@ -221,7 +218,6 @@ class CaliApp(tk.Frame):
             self.spectrum = self.spectrum*(-1) + np.max(self.spectrum)
             self.ax.plot(self.selectedftir_in, 'r', linewidth = 0.3)
             self.mwax.plot( np.arange(len(self.spectrum)), self.spectrum, linewidth= 0.3)
-            # self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
             self.canvas.draw_idle()
         except FileNotFoundError:
             print("File Not found")
@@ -240,8 +236,6 @@ class CaliApp(tk.Frame):
         sim_peaks, _ = find_peaks(self.selectedftir_in, prominence=0.3)
         ldigi_peaks = digi_peaks[ (digi_peaks > np.min(self.ax2_lines)) & (digi_peaks < np.max(self.ax2_lines)) ]
         lsim_peaks = sim_peaks[ (sim_peaks > np.min(self.ax1_lines)) & (sim_peaks < np.max(self.ax1_lines)) ]
-        [self.cal_wv.append(self.selectedftir_wv[i]) for i in lsim_peaks]
-        self.cal_pix = ldigi_peaks
         self.mwax.plot(ldigi_peaks, self.smoothed_sp[ldigi_peaks], "xr")
         # self.ax.plot(lsim_peaks, self.selectedftir_in[lsim_peaks], "xb")
         reg = LinearRegression().fit(ldigi_peaks.reshape(-1,1),lsim_peaks.reshape(-1,1) )
@@ -253,6 +247,12 @@ class CaliApp(tk.Frame):
         self.calax.scatter(ldigi_peaks, lsim_peaks, marker= 'o')
         self.calax.scatter(digi_peaks, predicted_lsim, marker= '.')
         self.canvas.draw_idle()
+        self.cal_pix = digi_peaks
+        predicted_lsim = np.array(predicted_lsim.flatten())
+        [self.cal_wv.append(self.selectedftir_wv[i]) for i in predicted_lsim]
+        self.cal_wv = np.array(self.cal_wv).round(4)
+        # print(self.cal_wv)
+        # print(self.cal_pix)
 
     def plot_spectra(self):
         if self.threadnm == "digi":
@@ -261,9 +261,9 @@ class CaliApp(tk.Frame):
         elif self.threadnm == "cali":
             try:
 
-                self.ftir_sp = np.recfromtxt('data/simulated.dat', names=['w', 'i'], encoding='utf8')
-                self.ftir_wv = self.ftir_sp.w
-                self.ftir_in = self.ftir_sp.i
+                # self.ftir_sp = np.recfromtxt('data/simulated.dat', names=['w', 'i'], encoding='utf8')
+                # self.ftir_wv = self.ftir_sp.w
+                # self.ftir_in = self.ftir_sp.i
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
                 self.ax.clear()
                 # self.fax.clear()
@@ -321,7 +321,6 @@ class CaliApp(tk.Frame):
                 self.canvas.draw_idle()
             else:
                 pass
-            print(self.ax1_lines, self.ax2_lines)
             # self.plotlines()
 
     def scaleSpectra(self, dummy):
@@ -337,7 +336,6 @@ class CaliApp(tk.Frame):
             self.canvas.draw_idle()
         else:
             print("First plot spectra to scale")
-            print(self.hscaler.get())
 
     def on_pltselect(self, wv_min, wv_max):
 

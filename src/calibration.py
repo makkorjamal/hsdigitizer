@@ -1,61 +1,20 @@
 #!/usr/bin/python3
 from __future__ import print_function, division
-import os
+import os, pickle, sys
 import numpy as np
-from utilfunc import imputate_nan
 import datetime as dt
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons, TextBox
 from scipy.optimize import curve_fit
-from jsonparser import JsonParser
-import concurrent.futures
-from utilfunc import create_sprange
-from spectrum import Spectrum
-from itertools import zip_longest
+import pdb
 
 
 class Calibrator():
 
-    # def parallelize(self):
-    #     jsparser = JsonParser(self.savepath,[])
-    #     self.data = jsparser.read_json('spectra_file.json')
-    #     self.spectrums = []
-    #     tmp_img_names = []
-    #     tmp_sp_names = []
-    #     tmp_sp_ranges = create_sprange(3249, 3565, 6)
-    #     tmp_calsp_names = []
-    #     tmp_calsplines_names = []
-
-
-#         sp_names = []
-#         for dd in self.data:
-#             tmp_img_names.append(dd.img_name)
-#             tmp_sp_names.append(dd.sp_name)
-#             tmp_sp_ranges.append(dd.sp_range)
-
-        # with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
-        #     for names in executor.map(self.save_data,tmp_sp_names):
-        #         tmp_calsplines_names.append(names[1])
-        #         tmp_calsp_names.append(names[0])
-        # self.spectrums = [Spectrum(tmp_img_name, tmp_sp_name, tmp_calsp_name, tmp_calsplines_name, tmp_sp_range) for tmp_img_name, tmp_sp_name, tmp_calsp_name, tmp_calsplines_name , tmp_sp_range in zip_longest(tmp_img_names, tmp_sp_names, tmp_calsp_names, tmp_calsplines_names, tmp_sp_ranges)]
-        # json_parser = JsonParser(self.savepath,self.spectrums)
-        # json_parser.save_json()
-
-    def save_data(self):
-        self.y = self.digitized_sp.astype(float)
-        # self.y = self.dta*(-1)+np.max(self.dta)
-        self.yoffset = 0
-        self.y2 =( self.y-self.yoffset)/np.max(self.y-self.yoffset)
-        self.x2 = np.arange(len(self.y2))
-        self.ax1_lines, self.ax2_lines = [], []
-        self.read_cali_lines(self.cal_lines)
-        # self.reduce_points(None)
-        # self.print_sfit_readable_spectrum(None)
-
-    def print_sfit_readable_spectrum(self,event, sza=63.0, latlon=(46.55, 7.98), d=dt.datetime(1951, 4, 15, 7, 30, 0), res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
+    def print_sfit_readable_spectrum(self, sza=63.0, latlon=(46.55, 7.98), d=dt.datetime(1951, 4, 15, 7, 30, 0), res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
         spc = self.yreduced
         wvn_bounds = [np.min(self.xcal), np.max(self.xcal)]
-        c_fname = os.path.join(self.cal_lines.replace( '_cal_lines.dat', 'calibrated.dat'))
+        fname = os.path.join(self.savepath, self.cal_name.replace('cal_lines.dat', 'calibrated.dat'))
         #pdb.set_trace()
         s = ' %4.2f  %8.4f  %4.2f  %5.2f  %5i\n'%(sza, rearth, latlon[0], latlon[1] , sn)
         s = s + d.strftime(' %Y %m %d %H %M %S\n')
@@ -63,28 +22,25 @@ class Calibrator():
         s = s + ' %7.3f %7.3f %11.10f %7i'%(wvn_bounds[0], wvn_bounds[1], (wvn_bounds[1]-wvn_bounds[0])/float(len(spc)), len(spc))
         for i in spc:
             s+='\n %8.5f'%(i)
-        with open(c_fname, 'w') as f:
+        with open(fname, 'w') as f:
             f.write(s)
-        # print('Wrote file', c_fname)
-        return c_fname.replace(self.savepath, "")
+        print('Wrote file', fname)
     
-    def read_cali_lines(self, cal_lines):
-        fname = os.path.join(cal_lines)
+    def read_cali_lines(self):
+        fname = os.path.join(self.savepath, self.cal_name)
         with open(fname, 'r') as f:
             ll = f.readlines()
         self.ax1_lines = [float(i.split()[0]) for i in ll]
         self.ax2_lines = [float(i.split()[1]) for i in ll]
         print(self.ax1_lines)
         print(self.ax2_lines)
-        # print('Read calibration lines from', fname)
+        print('Read calibration lines from', fname)
         self.calibrate(None)
     
-    def reduce_points(self, event, res=0.05):
+    def reduce_points(self, res=0.05):
 
         xo = self.xcal
         yo = self.y2
-        # yo = yo[~np.isnan(yo)]
-        # xo = xo[~np.isnan(xo)]
         yn = []
         xmin, xmax = np.min(self.xcal), np.max(self.xcal)
         xn = np.linspace(xmin, xmax, int((xmax-xmin)/res))
@@ -92,33 +48,38 @@ class Calibrator():
             yn.append(np.median(yo[(xo > x-res/2) & (xo < x+res/2)]))
         self.yreduced = np.array(yn)
         self.xreduced = xn
-        # self.ax1.plot(self.xreduced, self.yreduced, '-')
-        # self.fig.canvas.draw_idle()
 
-        
     def calibrate(self, event):
         l1 = np.unique(np.array(self.ax1_lines))
         l2 = np.unique(np.array(self.ax2_lines))
         l1.sort()
         l2.sort()
-        f = lambda x, a,b,c: a*x*x+b*x+c
+        f = lambda x, a,b: a*x+b
         p, pcov = curve_fit(f, l2, l1)
-        #print(p)
-        #pdb.set_trace()
-        # valid = ~(np.isnan(self.x2))
         self.xcal = f(self.x2, *p)
-        print(self.xcal)
 
-    def __init__(self, savepath, digitized_sp, cal_lines):
+    def __init__(self, savepath, sp_digitized, cal_name):
         self.savepath = savepath
-        self.cal_lines = cal_lines
-        self.digitized_sp = digitized_sp
-        # self.dta = np.recfromtxt(os.path.join(self.savepath, self.digitized_sp), encoding='utf8')
-        self.save_data()
-
+        self.sp_digitized = sp_digitized
+        self.cal_name = cal_name
+        # self.data = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
+        # self.y = self.data.y*(-1)+np.max(self.data.y)
+        self.yoffset = 0
+        self.y2 = (self.sp_digitized-self.yoffset)/np.max(self.sp_digitized-self.yoffset)
+        self.x2 = np.arange(len(self.y2))
+        #
+        self.ax1_lines, self.ax2_lines = [], []
+        self.read_cali_lines()
+        self.reduce_points()
+        self.print_sfit_readable_spectrum()
 if __name__ == '__main__':
     #if len(sys.argv)==2:
+    fname = '/home/jamal/venvs/hsdigitizer/src/data/sroll_17_avril_02_digitized.dat'#sys.argv[1]
     path = 'data/'
-    # fname = 'digitized_copyscan_2901_2926_a.dat'#sys.argv[1]
-    fname = 'digitized_14065069.dat'#sys.argv[1]
-    Calibrator(path, path)
+    Calibrator(path, fname)
+    #else:
+        #print('Add image filename as cmdline arg ....')
+
+
+
+
