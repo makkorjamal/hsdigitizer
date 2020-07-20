@@ -247,12 +247,11 @@ class CaliApp(tk.Frame):
         self.calax.scatter(ldigi_peaks, lsim_peaks, marker= 'o')
         self.calax.scatter(digi_peaks, predicted_lsim, marker= '.')
         self.canvas.draw_idle()
-        self.cal_pix = digi_peaks
+        self.cal_pix = ldigi_peaks
         predicted_lsim = np.array(predicted_lsim.flatten())
-        [self.cal_wv.append(self.selectedftir_wv[i]) for i in predicted_lsim]
+        [self.cal_wv.append(self.selectedftir_wv[i]) for i in lsim_peaks]
         self.cal_wv = np.array(self.cal_wv).round(4)
-        print(self.cal_wv)
-        print(self.cal_pix)
+
     def read_cal_spec(self, path, name):
 
         with open(os.path.join(path, name)) as f:
