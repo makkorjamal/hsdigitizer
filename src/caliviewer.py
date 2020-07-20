@@ -251,8 +251,18 @@ class CaliApp(tk.Frame):
         predicted_lsim = np.array(predicted_lsim.flatten())
         [self.cal_wv.append(self.selectedftir_wv[i]) for i in predicted_lsim]
         self.cal_wv = np.array(self.cal_wv).round(4)
-        # print(self.cal_wv)
-        # print(self.cal_pix)
+        print(self.cal_wv)
+        print(self.cal_pix)
+    def read_cal_spec(self, path, name):
+
+        with open(os.path.join(path, name)) as f:
+            lines = f.readlines()
+        wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
+        wl_line = wl_line.astype(np.float)
+        spec = np.array(lines[4:])
+        spec = spec.astype(np.float)
+        wavelength = np.linspace(wl_line[0], wl_line[1], int(wl_line[3]))
+        return spec, wavelength
 
     def plot_spectra(self):
         if self.threadnm == "digi":
@@ -260,24 +270,34 @@ class CaliApp(tk.Frame):
         #get selected spectra and plot
         elif self.threadnm == "cali":
             try:
+                spec , wavelength = self.read_cal_spec(self.savepath, '{}_{}_calibrated.dat'.format(self.sp_range[0],self.sp_range[1]))
+                print(spec, wavelength)
+                self.ax.clear()
 
+                d = np.recfromtxt('data/S16428AC_025_trian_zf2.dpt', names=['w', 'i'], encoding='utf8')
+                self.x1 = d.w
+                self.y1 = d.i
                 # self.ftir_sp = np.recfromtxt('data/simulated.dat', names=['w', 'i'], encoding='utf8')
                 # self.ftir_wv = self.ftir_sp.w
                 # self.ftir_in = self.ftir_sp.i
-                self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
-                self.ax.clear()
+                self.ax.plot(self.ftir_wv[( self.ftir_wv>= np.min(wavelength)) & ( self.ftir_wv<np.max(wavelength))], self.ftir_in[( self.ftir_wv <np.max(wavelength)) & (self.ftir_wv>=np.min(wavelength))] / np.max(self.ftir_in[( self.ftir_wv <np.max(wavelength)) & (self.ftir_wv>=np.min(wavelength))]), 'r', linewidth = 0.3)
+
+                # self.ax.plot(self.x1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))], (self.y1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))]/np.max(self.y1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))])))
+                self.ax.plot(wavelength, spec / np.max(spec), linewidth=0.3)
+                # self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
+                # self.ax.clear()
                 # self.fax.clear()
-                self.mwax.clear()
-                self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
-                self.axline, = self.ax.plot(self.x_vals,self.spectrum, picker=5, linewidth = 0.3)
-                self.ax.set_ylabel('I', picker=True, bbox=dict(facecolor='red'))
-                self.mwaxline, = self.mwax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
+                # self.mwax.clear()
+                # self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
+                # self.axline, = self.ax.plot(self.x_vals,self.spectrum, picker=5, linewidth = 0.3)
+                # self.ax.set_ylabel('I', picker=True, bbox=dict(facecolor='red'))
+                # self.mwaxline, = self.mwax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
                 # self.faxline, =self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
                 # self.fax.legend([ 'Simulated' ], loc = 'upper right', fontsize='xx-small')
                 # self.ax.set_zorder(self.fax.get_zorder()+1)
                 # self.ax.patch.set_visible(False)
-                self.span_select = SpanSelector(self.ax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
-                self.ax.legend([ 'Measured' ], loc = 'lower right', fontsize='xx-small')
+                # self.span_select = SpanSelector(self.ax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
+                # self.ax.legend([ 'Measured' ], loc = 'lower right', fontsize='xx-small')
                 self.canvas.draw()
             except FileNotFoundError:
                 print('File not found')
