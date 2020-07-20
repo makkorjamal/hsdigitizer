@@ -211,8 +211,8 @@ class CaliApp(tk.Frame):
             self.ftir_sp = np.recfromtxt('data/simulated.dat', names=['w', 'i'], encoding='utf8')
             self.ftir_wv = self.ftir_sp.w
             self.ftir_in = self.ftir_sp.i
-            self.selectedftir_wv = self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])]
-            self.selectedftir_in = self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )] 
+            self.selectedftir_wv = self.ftir_wv[( self.ftir_wv>(self.sp_range[0]-10) ) & ( self.ftir_wv<(self.sp_range[1] -10))]
+            self.selectedftir_in = self.ftir_in[( self.ftir_wv <(self.sp_range[1] -10)) & ( self.ftir_wv>(self.sp_range[0]-10))] 
 
             self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_digi), skiprows=0)
             self.spectrum = self.spectrum*(-1) + np.max(self.spectrum)
@@ -247,9 +247,9 @@ class CaliApp(tk.Frame):
         self.calax.scatter(ldigi_peaks, lsim_peaks, marker= 'o')
         self.calax.scatter(digi_peaks, predicted_lsim, marker= '.')
         self.canvas.draw_idle()
-        self.cal_pix = ldigi_peaks
+        self.cal_pix = digi_peaks
         predicted_lsim = np.array(predicted_lsim.flatten())
-        [self.cal_wv.append(self.selectedftir_wv[i]) for i in lsim_peaks]
+        [self.cal_wv.append(self.selectedftir_wv[i]) for i in predicted_lsim]
         self.cal_wv = np.array(self.cal_wv).round(4)
 
     def read_cal_spec(self, path, name):
@@ -273,13 +273,7 @@ class CaliApp(tk.Frame):
                 print(spec, wavelength)
                 self.ax.clear()
 
-                d = np.recfromtxt('data/S16428AC_025_trian_zf2.dpt', names=['w', 'i'], encoding='utf8')
-                self.x1 = d.w
-                self.y1 = d.i
-                # self.ftir_sp = np.recfromtxt('data/simulated.dat', names=['w', 'i'], encoding='utf8')
-                # self.ftir_wv = self.ftir_sp.w
-                # self.ftir_in = self.ftir_sp.i
-                self.ax.plot(self.ftir_wv[( self.ftir_wv>= np.min(wavelength)) & ( self.ftir_wv<np.max(wavelength))], self.ftir_in[( self.ftir_wv <np.max(wavelength)) & (self.ftir_wv>=np.min(wavelength))] / np.max(self.ftir_in[( self.ftir_wv <np.max(wavelength)) & (self.ftir_wv>=np.min(wavelength))]), 'r', linewidth = 0.3)
+                self.ax.plot(self.selectedftir_wv, self.selectedftir_in, 'r', linewidth = 0.3)
 
                 # self.ax.plot(self.x1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))], (self.y1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))]/np.max(self.y1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))])))
                 self.ax.plot(wavelength, spec / np.max(spec), linewidth=0.3)
