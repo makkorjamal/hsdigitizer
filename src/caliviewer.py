@@ -127,6 +127,7 @@ class CaliApp(tk.Frame):
         self.simulated_checkbtn.pack()
         self.meassured_checkbtn = tk.Checkbutton(self.checkframe, text='Measured',variable=self.checkvar2, onvalue=1, offvalue=0, command=self.show_selected) 
         self.meassured_checkbtn.pack()
+        self.span_select = SpanSelector(self.mwax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'), button = 3)
     def quit(self):
         self.parent.quit()     # stops mainloop
         self.parent.destroy()  # this is necessary on Windows to prevent
@@ -201,6 +202,11 @@ class CaliApp(tk.Frame):
             elif self.threadnm == "digi":
                 self.threadnm = "digi"
                 # self.populate_list()
+                self.ax.clear()
+                self.mwax.clear()
+                self.calax.clear()
+                self.ax1_lines = []
+                self.ax2_lines = []
                 self.ini_plot()
 
     def ini_plot(self):
@@ -215,9 +221,13 @@ class CaliApp(tk.Frame):
             self.selectedftir_in = self.ftir_in[( self.ftir_wv <(self.sp_range[1] -10)) & ( self.ftir_wv>(self.sp_range[0]-10))] 
 
             self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_digi), skiprows=0)
-            self.spectrum = self.spectrum*(-1) + np.max(self.spectrum)
+            self.xvals = np.arange(len(self.spectrum))
+            # self.spectrum = self.spectrum*(-1) + np.max(self.spectrum)
+            self.selectedftir_in = self.selectedftir_in*(-1) + np.max(self.selectedftir_in)
             self.ax.plot(self.selectedftir_in, 'r', linewidth = 0.3)
-            self.mwax.plot( np.arange(len(self.spectrum)), self.spectrum, linewidth= 0.3)
+            self.ax.set_ylim(self.mwax.get_ylim()[::-1])
+            self.mwaxline, = self.mwax.plot(self.xvals , self.spectrum, linewidth= 0.3)
+            self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
             self.canvas.draw_idle()
         except FileNotFoundError:
             print("File Not found")
@@ -228,29 +238,31 @@ class CaliApp(tk.Frame):
         self.smoothed_sp = savgol_filter(self.spectrum, 6*window + 1, poly_order, deriv=0)
         self.mwax.clear()
         self.mwax.plot(self.smoothed_sp, linewidth=0.3)
-        # self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
+        self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
         self.canvas.draw_idle()
 
     def find_peaks(self):
         digi_peaks, _ = find_peaks(self.smoothed_sp, prominence=500)
-        sim_peaks, _ = find_peaks(self.selectedftir_in, prominence=0.3)
+        sim_peaks, _ = find_peaks(self.selectedftir_in, prominence=0.2)
         ldigi_peaks = digi_peaks[ (digi_peaks > np.min(self.ax2_lines)) & (digi_peaks < np.max(self.ax2_lines)) ]
         lsim_peaks = sim_peaks[ (sim_peaks > np.min(self.ax1_lines)) & (sim_peaks < np.max(self.ax1_lines)) ]
         self.mwax.plot(ldigi_peaks, self.smoothed_sp[ldigi_peaks], "xr")
         # self.ax.plot(lsim_peaks, self.selectedftir_in[lsim_peaks], "xb")
-        reg = LinearRegression().fit(ldigi_peaks.reshape(-1,1),lsim_peaks.reshape(-1,1) )
-        predicted_lsim = reg.predict(digi_peaks.reshape(-1,1))
-        predicted_lsim = predicted_lsim.astype(int)
-        self.ax.plot(predicted_lsim, self.selectedftir_in[predicted_lsim], "xb")
-        self.mwax.plot(digi_peaks, self.smoothed_sp[digi_peaks], "xr")
+        # reg = LinearRegression().fit(ldigi_peaks.reshape(-1,1),lsim_peaks.reshape(-1,1) )
+        # predicted_lsim = reg.predict(digi_peaks.reshape(-1,1))
+        # predicted_lsim = predicted_lsim.astype(int)
+        self.ax.plot(lsim_peaks, self.selectedftir_in[lsim_peaks], "xb")
+        # self.mwax.plot(digi_peaks, self.smoothed_sp[digi_peaks], "xr")
         # self.calax.scatter(ldigi_peaks, self.cal_wv, marker= '.')
         self.calax.scatter(ldigi_peaks, lsim_peaks, marker= 'o')
-        self.calax.scatter(digi_peaks, predicted_lsim, marker= '.')
+        # self.calax.scatter(digi_peaks, predicted_lsim, marker= '.')
         self.canvas.draw_idle()
-        self.cal_pix = digi_peaks
-        predicted_lsim = np.array(predicted_lsim.flatten())
-        [self.cal_wv.append(self.selectedftir_wv[i]) for i in predicted_lsim]
+        self.cal_pix = ldigi_peaks
+        # predicted_lsim = np.array(predicted_lsim.flatten())
+        [self.cal_wv.append(self.selectedftir_wv[i]) for i in lsim_peaks]
         self.cal_wv = np.array(self.cal_wv).round(4)
+        print(lsim_peaks)
+        print(self.cal_wv)
 
     def read_cal_spec(self, path, name):
 
@@ -269,14 +281,15 @@ class CaliApp(tk.Frame):
         #get selected spectra and plot
         elif self.threadnm == "cali":
             try:
-                spec , wavelength = self.read_cal_spec(self.savepath, '{}_{}_calibrated.dat'.format(self.sp_range[0],self.sp_range[1]))
-                print(spec, wavelength)
+                self.spec , self.wavelength = self.read_cal_spec(self.savepath, '{}_{}_calibrated.dat'.format(self.sp_range[0],self.sp_range[1]))
                 self.ax.clear()
 
+                self.selectedftir_in = self.selectedftir_in*(-1) + np.max(self.selectedftir_in)
                 self.ax.plot(self.selectedftir_wv, self.selectedftir_in, 'r', linewidth = 0.3)
 
+
                 # self.ax.plot(self.x1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))], (self.y1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))]/np.max(self.y1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))])))
-                self.ax.plot(wavelength, spec / np.max(spec), linewidth=0.3)
+                self.ax.plot(self.wavelength, self.spec / np.max(self.spec), linewidth=0.3)
                 # self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
                 # self.ax.clear()
                 # self.fax.clear()
@@ -288,8 +301,6 @@ class CaliApp(tk.Frame):
                 # self.faxline, =self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
                 # self.fax.legend([ 'Simulated' ], loc = 'upper right', fontsize='xx-small')
                 # self.ax.set_zorder(self.fax.get_zorder()+1)
-                # self.ax.patch.set_visible(False)
-                # self.span_select = SpanSelector(self.ax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
                 # self.ax.legend([ 'Measured' ], loc = 'lower right', fontsize='xx-small')
                 self.canvas.draw()
             except FileNotFoundError:
@@ -317,24 +328,18 @@ class CaliApp(tk.Frame):
             self.axline.set_visible(False)
             self.canvas.draw()
 
-    def plotlines(self):
-        self.ax1l = self.ax.vlines(self.ax1_lines, 0,1, linestyles = 'dotted')
-        self.ax2l = self.mwax.vlines(self.ax2_lines, 0,1, linestyles = 'dotted')
-        self.canvas.draw_idle()
-
     def onclick(self, event):
         if event.dblclick:
             if event.inaxes==self.ax:
                 self.ax1_lines.append(event.xdata)
-                self.ax1l = self.ax.vlines(self.ax1_lines, 0,1, linestyles = 'dotted')
+                self.ax1l = self.ax.vlines(self.ax1_lines, 0,1, linestyles = 'solid', linewidth = 0.5)
                 self.canvas.draw_idle()
             elif event.inaxes==self.mwax:
                 self.ax2_lines.append(event.xdata)
-                self.ax2l = self.mwax.vlines(self.ax2_lines, 0,1, linestyles = 'dotted')
+                self.ax2l = self.mwax.vlines(self.ax2_lines, 0,1,transform = self.mwax.get_xaxis_transform(), linestyles = 'solid', linewidth = 0.5)
                 self.canvas.draw_idle()
             else:
                 pass
-            # self.plotlines()
 
     def scaleSpectra(self, dummy):
         if self.threadnm == "cali":
@@ -355,11 +360,11 @@ class CaliApp(tk.Frame):
         idxmin, idxmax = np.searchsorted(self.x_vals, (wv_min, wv_max))
         idxmax = min(len(self.x_vals) - 1, idxmax)
 
-        mw_wv = self.x_vals[idxmin:idxmax]
-        mw_spec = self.spectrum[idxmin:idxmax]
-        self.mwaxline.set_data(mw_wv, mw_spec)
-        self.mwax.set_xlim(mw_wv[0], mw_wv[-1])
-        self.mwax.set_ylim(mw_spec.min(), mw_spec.max())
+        self.xvals = self.x_vals[idxmin:idxmax]
+        self.spectrum = self.spectrum[idxmin:idxmax]
+        self.mwaxline.set_data(self.xvals, self.spectrum)
+        self.mwax.set_xlim(self.xvals[0], self.xvals[-1])
+        self.mwax.set_ylim(self.spectrum.min(), self.spectrum.max())
         self.canvas.draw_idle()
 
         # save

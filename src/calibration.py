@@ -32,8 +32,6 @@ class Calibrator():
             ll = f.readlines()
         self.ax1_lines = [float(i.split()[0]) for i in ll]
         self.ax2_lines = [float(i.split()[1]) for i in ll]
-        print(self.ax1_lines)
-        print(self.ax2_lines)
         print('Read calibration lines from', fname)
         self.calibrate(None)
     
@@ -61,6 +59,7 @@ class Calibrator():
     def __init__(self, savepath, sp_digitized, cal_name):
         self.savepath = savepath
         self.sp_digitized = sp_digitized
+        self.sp_digitized = self.sp_digitized*(-1)+np.max(self.sp_digitized)
         self.cal_name = cal_name
         # self.data = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
         # self.y = self.data.y*(-1)+np.max(self.data.y)
