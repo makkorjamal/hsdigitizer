@@ -5,6 +5,7 @@ import tkinter as tk
 import os
 from sklearn.linear_model import LinearRegression
 import ttk
+from utilfunc import read_cal_spec, update_cal_spec
 import config
 import matplotlib.gridspec as gridspec
 from scipy.signal import find_peaks
@@ -37,6 +38,8 @@ class CaliApp(tk.Frame):
         self.ax2_lines = []
         self.cal_wv = []
         self.cal_pix = []
+        self.wave_range = []
+        self.new_line = []
 
     def create_widgets(self):
         self.plotframe= tk.LabelFrame(self, padx = 3, pady = 15)
@@ -103,9 +106,14 @@ class CaliApp(tk.Frame):
         self.vscale_var_p.set(0)
         self.vscaler_p = tk.Scale(self.plotframe, from_=50, to=-50, command=self.scaleSpectra, variable=self.vscale_var_p, orient=tk.VERTICAL, length= 300, resolution = 0.1)
         self.vscaler_p.grid(row = 0, column = 2)
+        # save adjusted spectra
+
+        self.sbutton = tk.Button(self.commandframe, text = "Save", command = self.save_adjusted_sp, padx = 5, pady = 4, font = ("Helvetica", 16))
+        self.sbutton.grid(row = 0, column = 3)
+
        #Quit 
         self.qbutton = tk.Button(self.commandframe, text = "Quit", command = self.quit, padx = 5, pady = 4, font = ("Helvetica", 16))
-        self.qbutton.grid(row = 0, column = 3)
+        self.qbutton.grid(row = 0, column = 4)
         #Progress
         # self.progressbar = ttk.Progressbar(self.commandframe, mode='indeterminate')
         # self.progressbar.grid(column=4, row=0, sticky=tk.W)
@@ -259,16 +267,6 @@ class CaliApp(tk.Frame):
         print(lsim_peaks)
         print(self.cal_wv)
 
-    def read_cal_spec(self, path, name):
-
-        with open(os.path.join(path, name)) as f:
-            lines = f.readlines()
-        wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
-        wl_line = wl_line.astype(np.float)
-        spec = np.array(lines[4:])
-        spec = spec.astype(np.float)
-        wavelength = np.linspace(wl_line[0], wl_line[1], int(wl_line[3]))
-        return spec, wavelength
 
     def plot_spectra(self):
         if self.threadnm == "digi":
@@ -276,7 +274,7 @@ class CaliApp(tk.Frame):
         #get selected spectra and plot
         elif self.threadnm == "cali":
             try:
-                self.spec , self.wavelength = self.read_cal_spec(self.savepath, '{}_{}_calibrated.dat'.format(self.sp_range[0],self.sp_range[1]))
+                self.spec , self.wavelength = read_cal_spec(self.savepath, '{}_{}_calibrated.dat'.format(self.sp_range[0],self.sp_range[1]))
                 self.ax.clear()
 
                 self.selectedftir_in = self.selectedftir_in*(-1) + np.max(self.selectedftir_in)
@@ -336,10 +334,13 @@ class CaliApp(tk.Frame):
             x_vals =  self.wavelength * (hscale_value/self.mean_wv) + hscale_value_p/self.mean_wv 
             # y_vals = self.spectrum * (vscale_value/50) + (vscale_value_p/50)
             self.axline.set_xdata(x_vals)
+            self.new_line = x_vals
             # self.axline.set_ydata(y_vals)
             self.canvas.draw_idle()
         else:
             print("First plot spectra to scale")
+    def save_adjusted_sp(self):
+        update_cal_spec(self.savepath, '{}_{}_calibrated.dat'.format(self.sp_range[0], self.sp_range[1]),[np.min(self.new_line),np.max(self.new_line)])
 
     def on_pltselect(self, wv_min, wv_max):
 
@@ -353,9 +354,6 @@ class CaliApp(tk.Frame):
         self.mwax.set_ylim(self.spectrum.min(), self.spectrum.max())
         self.canvas.draw_idle()
 
-        # save
-        np.savetxt("microwindows/MicroWindow_{:.2f}_{:.2f}.dat".format(min(mw_wv),max(mw_wv)), np.c_[mw_wv, mw_spec], fmt='%1.2f %1.2f')
-    
 if __name__ == "__main__":
     root = tk.Tk()
     width = root.winfo_screenwidth()

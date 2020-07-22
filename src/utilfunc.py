@@ -16,7 +16,6 @@ def read_spectra(filename):
     # file = np.genfromtxt(filename)
     with open(filename) as f:
         lines = f.readlines()
-        print(lines[0])
     sec_line = np.fromstring(lines[1], dtype = np.float16, sep = '\t')
     sec_line = sec_line.astype(np.float)
     spec = np.array(lines[2:])
@@ -27,6 +26,31 @@ def read_spectra(filename):
     with open(datafile, 'w+') as datafile_id:
         np.savetxt(datafile_id,list(zip(wavelength,spec)))
     
+def update_cal_spec(savepath,name, new_wl):
+    
+    with open(os.path.join(savepath, name)) as f:
+        lines = f.readlines()
+    wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
+    lines[3][0].replace(lines[3][0], str(new_wl[0]) )
+    lines[3][1].replace(lines[3][1], str(new_wl[1]) )
+    print(new_wl)
+    new_sp_file = os.path.join(savepath, name)
+    with open(new_sp_file, 'w+') as cal_fil_id:
+        cal_fil_id.writelines(lines)
+        print("wrote new file")
+
+
+def read_cal_spec(path, name):
+
+    with open(os.path.join(path, name)) as f:
+        lines = f.readlines()
+    wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
+    wl_line = wl_line.astype(np.float)
+    spec = np.array(lines[4:])
+    spec = spec.astype(np.float)
+    wavelength = np.linspace(wl_line[0], wl_line[1], int(wl_line[3]))
+    return spec, wavelength
+
 def create_sprange(sp_min, sp_max,nm_sp):
     c = []
     ra = np.linspace(sp_min, sp_max, nm_sp + 1)
