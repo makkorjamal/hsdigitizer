@@ -194,11 +194,6 @@ class CaliApp(tk.Frame):
             if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
-                self.hscaler.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.01)
-                self.hscaler_p.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.01)
-                self.mean_wv = (self.sp_range[0]+self.sp_range[1])/2
-                self.hscale_var.set(int(self.mean_wv))
-                self.hscale_var_p.set(int(self.mean_wv))
             elif self.threadnm == "digi":
                 self.threadnm = "digi"
                 # self.populate_list()
@@ -286,25 +281,16 @@ class CaliApp(tk.Frame):
 
                 self.selectedftir_in = self.selectedftir_in*(-1) + np.max(self.selectedftir_in)
                 self.ax.plot(self.selectedftir_wv, self.selectedftir_in, 'r', linewidth = 0.3)
-
-
-                # self.ax.plot(self.x1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))], (self.y1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))]/np.max(self.y1[(self.x1>=np.min(wavelength)) & (self.x1<np.max(wavelength))])))
-                self.ax.plot(self.wavelength, self.spec / np.max(self.spec), linewidth=0.3)
-                # self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected), skiprows=4)
-                # self.ax.clear()
-                # self.fax.clear()
-                # self.mwax.clear()
-                # self.x_vals = np.linspace(self.sp_range[0],self.sp_range[1],len(self.spectrum))
-                # self.axline, = self.ax.plot(self.x_vals,self.spectrum, picker=5, linewidth = 0.3)
-                # self.ax.set_ylabel('I', picker=True, bbox=dict(facecolor='red'))
-                # self.mwaxline, = self.mwax.plot(self.x_vals,self.spectrum, linewidth = 0.3)
-                # self.faxline, =self.fax.plot(self.ftir_wv[( self.ftir_wv>self.sp_range[0] ) & ( self.ftir_wv<self.sp_range[1])], (self.ftir_in[( self.ftir_wv <self.sp_range[1]) & ( self.ftir_wv>self.sp_range[0] )]), 'r', linewidth = 0.3)
-                # self.fax.legend([ 'Simulated' ], loc = 'upper right', fontsize='xx-small')
-                # self.ax.set_zorder(self.fax.get_zorder()+1)
-                # self.ax.legend([ 'Measured' ], loc = 'lower right', fontsize='xx-small')
+                self.axline, = self.ax.plot(self.wavelength, self.spec / np.max(self.spec), linewidth=0.3)
+                self.hscaler.configure(from_ = np.min(self.wavelength), to = np.max(self.wavelength), resolution = 0.01)
+                # self.hscaler_p.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.01)
+                self.mean_wv = (np.min(self.wavelength)+np.max(self.wavelength))/2
+                self.hscale_var.set(int(self.mean_wv))
+                # self.hscale_var_p.set(int(self.mean_wv))
                 self.canvas.draw()
             except FileNotFoundError:
                 print('File not found')
+
     def show_selected(self):
         if (self.checkvar1.get()==1) & (self.checkvar2.get()==0):
             # self.faxline.set_visible(True)
@@ -347,10 +333,10 @@ class CaliApp(tk.Frame):
             hscale_value_p = self.hscaler_p.get()
             vscale_value = self.vscaler.get()
             vscale_value_p = self.vscaler_p.get()
-            x_vals =  self.x_vals * (hscale_value/self.mean_wv) + hscale_value_p/self.mean_wv 
-            y_vals = self.spectrum * (vscale_value/50) + (vscale_value_p/50)
+            x_vals =  self.wavelength * (hscale_value/self.mean_wv) + hscale_value_p/self.mean_wv 
+            # y_vals = self.spectrum * (vscale_value/50) + (vscale_value_p/50)
             self.axline.set_xdata(x_vals)
-            self.axline.set_ydata(y_vals)
+            # self.axline.set_ydata(y_vals)
             self.canvas.draw_idle()
         else:
             print("First plot spectra to scale")
