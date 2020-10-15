@@ -59,7 +59,7 @@ class Digitizer():
     def digitize_point(self, s):
         x = np.arange(self.img.shape[0])
         y = np.divide(self.b[:, s],self.g[:, s],where = self.g[:,s] != 0)
-        cond = (y>(np.max(y))*0.80)# & (y<(np.max(y))*0.99)
+        cond = (y>(np.max(y))*0.80)# 
         
         with warnings.catch_warnings():
 
@@ -72,9 +72,9 @@ class Digitizer():
 if __name__ == '__main__':
     # dpath = 'images/'
     savepath = 'data/'
-    dpath = '/mnt/740617C970FA5889/scroll1_21_aout/'
+    # dpath = '/mnt/740617C970FA5889/scroll1_21_aout/'
     # dpath = '/home/jamal/spectra'
-    Digitizer(dpath, savepath)
+    # Digitizer(dpath, savepath)
 
 
 

@@ -86,10 +86,19 @@ class DigiApp(tk.Frame):
         self.parent.destroy()  # this is necessary on Windows to prevent
 
     def digitize_sp(self):
+        """
+        This function runs the digitazation process in parallel
+        Parameters: 
+            dpath: path where the images to be digitized are stored
+            savepath: path where the digitzed .bat file is saved
+        """
 
         Digitizer(self.dpath, self.savepath)
 
     def start_multip_thread(self, threadnm):
+        """
+        This function starts a thread to run the progress bar and avoid the UI freeze
+        """
 
         self.g_thread = threading.Thread(target=self.digitize_sp)
         if self.data:
@@ -113,6 +122,9 @@ class DigiApp(tk.Frame):
             self.parent.after(20, self.check_g_thread)
 
     def check_g_thread(self):
+        """
+        This function checks if the thread is still running and stops the progress when the thread is dead
+        """
         if self.g_thread.is_alive():
             self.parent.after(20, self.check_g_thread)
         else:
@@ -120,6 +132,11 @@ class DigiApp(tk.Frame):
             self.populate_list(self.dpath)
 
     def populate_list(self,dpath):
+        """
+        This fucntion populates the list by reading the json file that contains:
+            *the name of the image*
+            *the path of the digitzed spectrum*
+        """
 
         jsparser = JsonParser(self.savepath,[])
         try:
@@ -134,6 +151,9 @@ class DigiApp(tk.Frame):
                 self.spectralist.insert(tk.END, dx.img_name)
 
     def on_list_select(self,event):
+        """
+        This function takes the event of double click and select the image
+        """
 
         self.active = self.spectralist.get(tk.ACTIVE)
         if self.data:
@@ -152,7 +172,10 @@ class DigiApp(tk.Frame):
                 self.pbutton['state'] = "normal"
     
     def plot_spectra(self):
-        #get selected spectra and plot
+        """
+        This function plot the selected spectra on top of the coresponding image
+
+        """
         try:
             if self.threadnm == "digi":
                 self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected))
