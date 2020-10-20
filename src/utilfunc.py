@@ -1,4 +1,5 @@
-# import image_slicer
+#4500 import image_slicer
+from scipy.signal import fftconvolve
 import pytz
 import matplotlib.pyplot as plt
 import glob
@@ -75,6 +76,10 @@ def sza_calc(datetime_str, lat, lon):
     jfj_tz = pytz.timezone("Europe/Zurich")
     datetime_obj = datetime.strptime(datetime_str, '%d/%m/%Y %H:%M').astimezone(timezone(timedelta(hours = 1)))
     print(get_azimuth(lat, lon, datetime_obj))
+
+def find_sprange(sim_sp, obs_sp):
+    corr = fftconvolve(sim_sp , obs_sp , mode='same')           
+    return max(abs(corr))
 
 if __name__=="__main__":
     sza_calc('02/10/1951 11:56', 46.5475, 7.9853)
