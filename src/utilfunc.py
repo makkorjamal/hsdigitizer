@@ -1,10 +1,12 @@
 # import image_slicer
-
+import pytz
 import matplotlib.pyplot as plt
 import glob
 import image_slicer 
 from sklearn.impute import SimpleImputer
 from scipy.signal import savgol_filter
+from pysolar.solar import *
+from datetime import datetime, timezone, timedelta
 import numpy as np
 import os
 from itertools import product
@@ -68,28 +70,35 @@ def imputate_nan(sp_file):
     imp.fit(newfile)
     imputated_file = imp.transform(newfile)
     return (imputated_file.flatten())
+
+def sza_calc(datetime_str, lat, lon):
+    jfj_tz = pytz.timezone("Europe/Zurich")
+    datetime_obj = datetime.strptime(datetime_str, '%d/%m/%Y %H:%M').astimezone(timezone(timedelta(hours = 1)))
+    print(get_azimuth(lat, lon, datetime_obj))
+
 if __name__=="__main__":
+    sza_calc('02/10/1951 11:56', 46.5475, 7.9853)
     # image_slicer.slice( "images/sroll_17_avril.tif", col=6, row=1, save=True, DecompressionBombWarning=False)
-    califiles = glob.glob('data/*calibrated.dat')
-    _cal = np.loadtxt(califiles[1], skiprows = 4)
-    yhat = savgol_filter(_cal, 51, 12)
-    _sim = np.recfromtxt('data/simulated.dat', names = ['wavel', 'spec'])
-    wv_rng = np.linspace(3249,3565,6)
-    wv_min = int(wv_rng[1])
-    wv_max = int(wv_rng[2])
-    wv = np.linspace(wv_min, wv_max, len(_cal))
-    sim_wv=_sim.wavel[( _sim.wavel > wv_min ) & ( _sim.wavel < wv_max )]
-    sim_sp = _sim.spec[(_sim.wavel > wv_min ) &  (_sim.wavel < wv_max )] 
-    # plt.plot(wv, yhat)
-    fig1, ax1 = plt.subplots()
-    # fig2, ax2 = plt.subplots()
-    # ax1.plot(sim_wv, sim_sp)
-    dx = np.mean(np.diff(sim_wv))
-    shift = (np.argmax(signal.correlate(sim_sp, yhat, method='fft')) - len(yhat)) * dx
-    # ax2.plot(wv + shift, _cal, )
-    ax1.plot(wv , yhat)
-    ax1.plot(wv, _cal)
-    plt.show()
+    # califiles = glob.glob('data/*calibrated.dat')
+    # _cal = np.loadtxt(califiles[1], skiprows = 4)
+    # yhat = savgol_filter(_cal, 51, 12)
+    # _sim = np.recfromtxt('data/simulated.dat', names = ['wavel', 'spec'])
+    # wv_rng = np.linspace(3249,3565,6)
+    # wv_min = int(wv_rng[1])
+    # wv_max = int(wv_rng[2])
+    # wv = np.linspace(wv_min, wv_max, len(_cal))
+    # sim_wv=_sim.wavel[( _sim.wavel > wv_min ) & ( _sim.wavel < wv_max )]
+    # sim_sp = _sim.spec[(_sim.wavel > wv_min ) &  (_sim.wavel < wv_max )] 
+    # # plt.plot(wv, yhat)
+    # fig1, ax1 = plt.subplots()
+    # # fig2, ax2 = plt.subplots()
+    # # ax1.plot(sim_wv, sim_sp)
+    # dx = np.mean(np.diff(sim_wv))
+    # shift = (np.argmax(signal.correlate(sim_sp, yhat, method='fft')) - len(yhat)) * dx
+    # # ax2.plot(wv + shift, _cal, )
+    # ax1.plot(wv , yhat)
+    # ax1.plot(wv, _cal)
+    # plt.show()
 
 
 
