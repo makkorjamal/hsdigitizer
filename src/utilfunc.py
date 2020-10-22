@@ -1,11 +1,10 @@
 #4500 import image_slicer
-from scipy.signal import fftconvolve
 import pytz
 import matplotlib.pyplot as plt
 import glob
 import image_slicer 
 from sklearn.impute import SimpleImputer
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, fftconvolve, correlate
 from pysolar.solar import *
 from datetime import datetime, timezone, timedelta
 import numpy as np
@@ -13,9 +12,8 @@ import os
 from itertools import product
 from scipy import signal
 import glob
-# def xcorrelate(measured, simulated):
 
-def read_spectra(filename):
+def read_spectra(filename, save = False):
     # file = np.genfromtxt(filename)
     with open(filename) as f:
         lines = f.readlines()
@@ -26,26 +24,35 @@ def read_spectra(filename):
 
     wavelength = np.linspace(sec_line[0], sec_line[1], int(sec_line[3]))
     datafile = os.path.join('data/', 'simulated.dat')
-    with open(datafile, 'w+') as datafile_id:
-        np.savetxt(datafile_id,list(zip(wavelength,spec)))
+    if save:
+        with open(datafile, 'w+') as datafile_id:
+            np.savetxt(datafile_id,list(zip(wavelength,spec)))
+    else:
+        return wavelength, spec
+
+def fileList(source):
+    matches = []
+    for root, dirnames, filenames in os.walk(source):
+        for filename in filenames:
+            if filename.endswith('.final'):
+                matches.append(os.path.join(root, filename))
+    return matches    
+# def update_cal_spec(savepath,name, new_wl):
     
-def update_cal_spec(savepath,name, new_wl):
-    
-    with open(os.path.join(savepath, name)) as f:
-        lines = f.readlines()
-    wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
-    lines[3][0].replace(lines[3][0], str(new_wl[0]) )
-    lines[3][1].replace(lines[3][1], str(new_wl[1]) )
-    print(new_wl)
-    new_sp_file = os.path.join(savepath, name)
-    with open(new_sp_file, 'w+') as cal_fil_id:
-        cal_fil_id.writelines(lines)
-        print("wrote new file")
+#     with open(os.path.join(savepath, name)) as f:
+#         lines = f.readlines()
+#     wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
+#     lines[3][0].replace(lines[3][0], str(new_wl[0]) )
+#     lines[3][1].replace(lines[3][1], str(new_wl[1]) )
+#     print(new_wl)
+#     new_sp_file = os.path.join(savepath, name)
+#     with open(new_sp_file, 'w+') as cal_fil_id(lines):
+#         print("wrote new file")
 
 
-def read_cal_spec(path, name):
+def read_cal_spec(path):
 
-    with open(os.path.join(path, name)) as f:
+    with open(os.path.join(path)) as f:
         lines = f.readlines()
     wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
     wl_line = wl_line.astype(np.float)
@@ -78,11 +85,28 @@ def sza_calc(datetime_str, lat, lon):
     print(get_azimuth(lat, lon, datetime_obj))
 
 def find_sprange(sim_sp, obs_sp):
-    corr = fftconvolve(sim_sp , obs_sp , mode='same')           
-    return max(abs(corr))
+    artspec_files = fileList('.')
+    art_spec = []
+    wv_artsp = []
+    for artsp_file in artspec_files:
+        wv_artsp_tmp, artspec_tmp= read_spectra(artsp_file)
+        art_spec.append(artspec_tmp)
+        wv_artsp.append(wv_artsp_tmp)
+    art_spec= np.hstack(art_spec)
+    wv_artsp = np.hstack(art_spec)
+    digi_spec = np.loadtxt('src/data/sroll_17_avril_06_digitized.dat')
+    autocorr = fftconvolve(art_spec,digi_spec , mode='same')
+    artspec_index = np.where((autocorr == max(autocorr)))[0]
+    print(wv_artsp)
+    fig, (ax_orgi, ax_corr) = plt.subplots(2,1,sharex = True)
+    fig.tight_layout()
+    fig.show()
+
 
 if __name__=="__main__":
-    sza_calc('02/10/1951 11:56', 46.5475, 7.9853)
+    # sza_calc('02/10/1951 11:56', 46.5475, 7.9853)
+    find_sprange(None, None)
+
     # image_slicer.slice( "images/sroll_17_avril.tif", col=6, row=1, save=True, DecompressionBombWarning=False)
     # califiles = glob.glob('data/*calibrated.dat')
     # _cal = np.loadtxt(califiles[1], skiprows = 4)
