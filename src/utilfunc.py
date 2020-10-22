@@ -1,5 +1,8 @@
 #4500 import image_slicer
+from sklearn.preprocessing import normalize
 import pytz
+import matplotlib
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import glob
 import image_slicer 
@@ -85,7 +88,7 @@ def sza_calc(datetime_str, lat, lon):
     print(get_azimuth(lat, lon, datetime_obj))
 
 def find_sprange(sim_sp, obs_sp):
-    artspec_files = fileList('.')
+    artspec_files = sorted(fileList('./artspec/'))
     art_spec = []
     wv_artsp = []
     for artsp_file in artspec_files:
@@ -93,14 +96,18 @@ def find_sprange(sim_sp, obs_sp):
         art_spec.append(artspec_tmp)
         wv_artsp.append(wv_artsp_tmp)
     art_spec= np.hstack(art_spec)
-    wv_artsp = np.hstack(art_spec)
-    digi_spec = np.loadtxt('src/data/sroll_17_avril_06_digitized.dat')
-    autocorr = fftconvolve(art_spec,digi_spec , mode='same')
+    wv_artsp = np.hstack(wv_artsp)
+    digi_spec = np.hstack(normalize(np.loadtxt('data/sroll_17_avril_06_digitized.dat').reshape(1,-1)))
+    autocorr = fftconvolve(digi_spec ,art_spec, mode='full')
     artspec_index = np.where((autocorr == max(autocorr)))[0]
-    print(wv_artsp)
-    fig, (ax_orgi, ax_corr) = plt.subplots(2,1,sharex = True)
-    fig.tight_layout()
-    fig.show()
+    print(wv_artsp[artspec_index])
+    fig, ax = plt.subplots()
+    fig1, ax1 = plt.subplots()
+    fig2, ax2 = plt.subplots()
+    ax.plot(np.arange(len(art_spec)), art_spec)
+    ax1.plot(np.arange(len(autocorr)), autocorr)
+    ax2.plot(np.arange(len(digi_spec)), digi_spec)
+    plt.show()
 
 
 if __name__=="__main__":
