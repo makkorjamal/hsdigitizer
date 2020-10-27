@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import glob
 import image_slicer 
 from sklearn.impute import SimpleImputer
-from scipy.signal import savgol_filter, fftconvolve, correlate
+from scipy.signal import savgol_filter, fftconvolve, correlate, coherence, lfilter
 from pysolar.solar import *
 from datetime import datetime, timezone, timedelta
 import numpy as np
@@ -95,18 +95,25 @@ def find_sprange(sim_sp, obs_sp):
         wv_artsp_tmp, artspec_tmp= read_spectra(artsp_file)
         art_spec.append(artspec_tmp)
         wv_artsp.append(wv_artsp_tmp)
+
     art_spec= np.hstack(art_spec)
     wv_artsp = np.hstack(wv_artsp)
     digi_spec = np.hstack(normalize(np.loadtxt('data/sroll_17_avril_06_digitized.dat').reshape(1,-1)))
-    autocorr = fftconvolve(digi_spec ,art_spec, mode='full')
-    artspec_index = np.where((autocorr == max(autocorr)))[0]
+    digi_spec = np.flip(digi_spec)
+    fs = 10e3
+    # autocorr = correlate(art_spec,digi_spec , mode='same', method = 'fft')
+    autocorr = correlate(art_spec,digi_spec , mode='full', method = 'fft') 
+    freq, coher = coherence(art_spec ,art_spec) 
+    y_filtered = lfilter(art_spec,np.ones(1), digi_spec)
+    print(y_filtered)
+    artspec_index = np.where((autocorr == max(autocorr)))[0] 
     print(wv_artsp[artspec_index])
     fig, ax = plt.subplots()
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
-    ax.plot(np.arange(len(art_spec)), art_spec)
-    ax1.plot(np.arange(len(autocorr)), autocorr)
-    ax2.plot(np.arange(len(digi_spec)), digi_spec)
+    ax.plot(np.arange(len(y_filtered)), y_filtered)
+    # ax1.plot(np.arange(len(coher)), coher)
+    # ax2.plot(np.arange(len(digi_spec)), digi_spec)
     plt.show()
 
 
