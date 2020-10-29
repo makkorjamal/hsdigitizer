@@ -40,17 +40,17 @@ def fileList(source):
             if filename.endswith('.final'):
                 matches.append(os.path.join(root, filename))
     return matches    
-# def update_cal_spec(savepath,name, new_wl):
+
+def update_cal_spec(savepath,name):
     
-#     with open(os.path.join(savepath, name)) as f:
-#         lines = f.readlines()
-#     wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
-#     lines[3][0].replace(lines[3][0], str(new_wl[0]) )
-#     lines[3][1].replace(lines[3][1], str(new_wl[1]) )
-#     print(new_wl)
-#     new_sp_file = os.path.join(savepath, name)
-#     with open(new_sp_file, 'w+') as cal_fil_id(lines):
-#         print("wrote new file")
+    with open(os.path.join(savepath, name)) as f:
+        lines = f.readlines()
+    wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
+    lines[3][0].replace(lines[3][0], str(new_wl[0]) )
+    lines[3][1].replace(lines[3][1], str(new_wl[1]) )
+    new_sp_file = os.path.join(savepath, name)
+    with open(new_sp_file, 'w+') as cal_fil_id(lines):
+        print("wrote new file")
 
 
 def read_cal_spec(path):
@@ -91,29 +91,27 @@ def find_sprange(sim_sp, obs_sp):
     artspec_files = sorted(fileList('./artspec/'))
     art_spec = []
     wv_artsp = []
-    for artsp_file in artspec_files:
-        wv_artsp_tmp, artspec_tmp= read_spectra(artsp_file)
-        art_spec.append(artspec_tmp)
-        wv_artsp.append(wv_artsp_tmp)
+    # for artsp_file in artspec_files:
+    #     wv_artsp_tmp, artspec_tmp= read_spectra(artsp_file)
+    #     art_spec.append(artspec_tmp)
+    #     wv_artsp.append(wv_artsp_tmp)
 
-    art_spec= np.hstack(art_spec)
-    wv_artsp = np.hstack(wv_artsp)
-    digi_spec = np.hstack(normalize(np.loadtxt('data/sroll_17_avril_06_digitized.dat').reshape(1,-1)))
-    digi_spec = np.flip(digi_spec)
-    fs = 10e3
-    # autocorr = correlate(art_spec,digi_spec , mode='same', method = 'fft')
-    autocorr = correlate(art_spec,digi_spec , mode='full', method = 'fft') 
-    freq, coher = coherence(art_spec ,art_spec) 
-    y_filtered = lfilter(art_spec,np.ones(1), digi_spec)
-    print(y_filtered)
+    # art_spec= np.hstack(art_spec)
+    # wv_artsp = np.hstack(wv_artsp)
+    _sim = np.recfromtxt('simulated.dat', names = ['wavel', 'spec'])
+    art_spec =np.hstack(_sim['spec'])
+    wv_artsp= np.hstack(_sim['wavel'])
+    digi_spec = np.hstack(normalize(np.loadtxt('data/sroll_17_avril_02_digitized.dat').reshape(1,-1)))
+    # digi_spec = np.flip(digi_spec)
+    autocorr = correlate(art_spec,digi_spec , mode='same', method = 'fft')
     artspec_index = np.where((autocorr == max(autocorr)))[0] 
     print(wv_artsp[artspec_index])
     fig, ax = plt.subplots()
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
-    ax.plot(np.arange(len(y_filtered)), y_filtered)
-    # ax1.plot(np.arange(len(coher)), coher)
-    # ax2.plot(np.arange(len(digi_spec)), digi_spec)
+    ax.plot(wv_artsp, art_spec)
+    ax1.plot(np.arange(len(autocorr)), autocorr)
+    ax2.plot(np.arange(len(digi_spec)), digi_spec)
     plt.show()
 
 
