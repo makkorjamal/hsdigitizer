@@ -119,7 +119,8 @@ class Parameters(tk.Toplevel):
         dir_param['title'] = 'Please select directory'
         result = tk.filedialog.askdirectory(**dir_param)
         self.spPath.set(result)
-        self.pathLabel.config(bg = 'green')
+        if os.path.isdir(self.spPath.get()):
+            self.pathLabel.config(bg = 'green')
 
 class StatusBar(ttk.Frame):
 

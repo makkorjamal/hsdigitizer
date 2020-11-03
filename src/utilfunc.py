@@ -41,15 +41,18 @@ def fileList(source):
                 matches.append(os.path.join(root, filename))
     return matches    
 
-def update_cal_spec(savepath,name):
+def update_cal_spec(savepath,name, new_wl):
     
-    with open(os.path.join(savepath, name)) as f:
+    sppath = os.path.join(savepath, name)
+    with open(sppath) as f:
         lines = f.readlines()
+
     wl_line = np.fromstring(lines[3], dtype = np.float16, sep = '\t')
     lines[3][0].replace(lines[3][0], str(new_wl[0]) )
     lines[3][1].replace(lines[3][1], str(new_wl[1]) )
     new_sp_file = os.path.join(savepath, name)
-    with open(new_sp_file, 'w+') as cal_fil_id(lines):
+    with open(new_sp_file, 'w+') as cal_fil_id:
+        cal_fil_id.write(lines)
         print("wrote new file")
 
 

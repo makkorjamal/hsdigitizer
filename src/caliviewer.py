@@ -489,10 +489,7 @@ class CaliApp(tk.Frame):
     def save_adjusted_sp(self):
         update_cal_spec(
             self.savepath, '{}_{}_calibrated.dat'.format(
-                self.sp_range[0], self.sp_range[1]), [
-                np.min(
-                    self.new_line), np.max(
-                    self.new_line)])
+                self.sp_range[0], self.sp_range[1]), [ np.min( self.new_line), np.max( self.new_line)])
 
     def on_pltselect(self, wv_min, wv_max):
 
