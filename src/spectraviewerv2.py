@@ -3,7 +3,7 @@ import os
 from digiviewer import DigiApp
 from caliviewer import CaliApp
 import ttk
-import config
+import configparser as configuration
 
 class Root(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -48,7 +48,10 @@ class Parameters(tk.Toplevel):
         self.wm_title("Parameters")
         self.spPath = tk.StringVar()
         self.spPath.set('Spectra path not yet set')
-        self.lblColor = tk.StringVar()
+        self.spConfig = configuration.ConfigParser()
+        self.spConfig.read('sp_config.ini')
+        print(self.spConfig)
+
         self.createWidgets()
 
 
@@ -67,17 +70,17 @@ class Parameters(tk.Toplevel):
         self.sfitParamFrame = tk.Frame(self.paramFrame, padx = 5, pady = 5)
         self.sfitParamFrame.grid(row = 1, column = 0)
         self.szaLbl = tk.Label(self.sfitParamFrame, text = 'SZA')
-        self.szaEntry = tk.Entry(self.sfitParamFrame)
+        self.szaEntry = tk.Entry(self.sfitParamFrame, textvariable = self.spSZA)
         self.szaLbl.grid(row = 0, column = 0)
         self.szaEntry.grid(row = 0, column = 1)
 
         self.apoLbl = tk.Label(self.sfitParamFrame, text = 'APO')
-        self.apoEntry = tk.Entry(self.sfitParamFrame)
+        self.apoEntry = tk.Entry(self.sfitParamFrame, textvariable = self.spAPO)
         self.apoLbl.grid(row = 0, column = 2)
         self.apoEntry.grid(row = 0, column = 3)
 
         self.resLbl = tk.Label(self.sfitParamFrame, text = 'RES')
-        self.resEntry = tk.Entry(self.sfitParamFrame)
+        self.resEntry = tk.Entry(self.sfitParamFrame, textvariable = self.spRes)
         self.resLbl.grid(row = 1, column = 0)
         self.resEntry.grid(row = 1, column = 1)
 
@@ -86,15 +89,25 @@ class Parameters(tk.Toplevel):
         self.snLbl.grid(row = 1, column = 2)
         self.snEntry.grid(row = 1, column = 3)
 
-        self.RearthLbl = tk.Label(self.sfitParamFrame, text = 'Rearth')
-        self.RearthEntry = tk.Entry(self.sfitParamFrame)
-        self.RearthLbl.grid(row = 2, column = 0)
-        self.RearthEntry.grid(row = 2, column = 1)
+        self.rearthLbl = tk.Label(self.sfitParamFrame, text = 'Rearth')
+        self.rearthEntry = tk.Entry(self.sfitParamFrame)
+        self.rearthLbl.grid(row = 2, column = 0)
+        self.rearthEntry.grid(row = 2, column = 1)
 
         self.latlonLbl = tk.Label(self.sfitParamFrame, text = 'Lat/Lon')
         self.latlonEntry = tk.Entry(self.sfitParamFrame)
         self.latlonLbl.grid(row = 2, column = 2)
         self.latlonEntry.grid(row = 2, column = 3)
+
+        self.minWVLbl = tk.Label(self.sfitParamFrame, text = 'minWL')
+        self.minWVEntry = tk.Entry(self.sfitParamFrame)
+        self.minWVLbl.grid(row = 3, column = 0)
+        self.minWVEntry.grid(row = 3, column = 1)
+
+        self.maxWVLbl = tk.Label(self.sfitParamFrame, text = 'maxWL')
+        self.maxWVEntry = tk.Entry(self.sfitParamFrame)
+        self.maxWVLbl.grid(row = 3, column = 2)
+        self.maxWVEntry.grid(row = 3, column = 3)
 
         self.datetimeFrame = tk.Frame(self.paramFrame, padx = 5, pady = 5)
         self.datetimeFrame.grid(row= 2, column = 0)
@@ -121,6 +134,11 @@ class Parameters(tk.Toplevel):
         self.spPath.set(result)
         if os.path.isdir(self.spPath.get()):
             self.pathLabel.config(bg = 'green')
+    def fill_config():
+        self.config['DEFAULT'] = {'Resolution':self.spRes.get(), 'Apodization':self.spAPO.get(), 'SignalToNoise':self.spSN.get()}
+        self.config['spectra.conf'] = {'SpectraPath':self.spPath.get(), 'SolarZenith':self.spSZA.get(), 'REearth':self.spREarth.get(),
+                'MinWavelength':self.spMinWv,'MaxWavelength':self.spMaxWv,'DateTime':self.spDT.get()}
+
 
 class StatusBar(ttk.Frame):
 

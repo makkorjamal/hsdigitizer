@@ -28,7 +28,7 @@ class DigiApp(tk.Frame):
         self.active = ""
         # self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
         # self.dpath = '/mnt/740617C970FA5889/spectra_16_avril'
-        self.dpath = 'images/'
+        self.dpath = '/media/mokkar/9C33-6BBD/'
         # self.dpath = os.path.join(home,'spectra/')
     
     def create_widgets(self):

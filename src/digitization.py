@@ -5,6 +5,7 @@ import concurrent.futures
 import math
 import matplotlib
 import os
+from utilfunc import create_sprange
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -18,7 +19,7 @@ class Digitizer():
         self.digitized_spectrum = []
 
         self.dpath = dpath
-        self.sp_range = []
+        self.sp_range = create_sprange(1140, 1176, 6)
         self.savepath = savepath
         self.parallelize()
 
@@ -30,13 +31,13 @@ class Digitizer():
         self.spectrums = []
         with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
             for spectrum in executor.map(
-                    self.digitize_spectrum, self.img_names
+                    self.digitize_spectrum, self.img_names, self.sp_range
                     ):
                 self.spectrums.append(spectrum)
         json_parser = JsonParser('data' ,self.spectrums)
         json_parser.save_json()
 
-    def digitize_spectrum(self,img_fname):
+    def digitize_spectrum(self,img_fname, sp_range):
 
         # self.img = cv2.imread(os.path.join(self.dpath, img_fname))
         img = cv2.imread(os.path.join(self.dpath, img_fname))
@@ -54,7 +55,7 @@ class Digitizer():
                 for i in self.digitized_spectrum:
                     f.write('%4.2f\n'%i)
             print('{}'.format(spath))
-            return  Spectrum(impath,sp_name, sp_range = self.sp_range)
+            return  Spectrum(impath,sp_name, sp_range = sp_range )
 
     def digitize_point(self, s):
         x = np.arange(self.img.shape[0])
