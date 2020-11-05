@@ -9,6 +9,7 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.figure import Figure
 from digitization import Digitizer
 from jsonparser import JsonParser
+from config import SpectraConfig
 import cv2
 from calibration import Calibrator
 
@@ -26,10 +27,7 @@ class DigiApp(tk.Frame):
         self.threadnm = ""
         home = os.path.expanduser('~')
         self.active = ""
-        # self.dpath = '/mnt/740617C970FA5889/scroll1_21_aout'
-        # self.dpath = '/mnt/740617C970FA5889/spectra_16_avril'
-        self.dpath = '/media/mokkar/9C33-6BBD/'
-        # self.dpath = os.path.join(home,'spectra/')
+        self.dpath = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
     
     def create_widgets(self):
         self.plotframe= tk.LabelFrame(self, padx = 10, pady = 10)

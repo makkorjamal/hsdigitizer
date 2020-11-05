@@ -8,6 +8,7 @@ import os
 from utilfunc import create_sprange
 import numpy as np
 import cv2
+from config import SpectraConfig
 import matplotlib.pyplot as plt
 from spectrum import Spectrum
 from jsonparser import JsonParser
@@ -19,7 +20,9 @@ class Digitizer():
         self.digitized_spectrum = []
 
         self.dpath = dpath
-        self.sp_range = create_sprange(1140, 1176, 6)
+        min_wavelength = float(SpectraConfig.read_conf()['spectra.conf']['minwavelength']) 
+        max_wavelength = float(SpectraConfig.read_conf()['spectra.conf']['maxwavelength'])
+        self.sp_range = create_sprange(min_wavelength, max_wavelength, 6)
         self.savepath = savepath
         self.parallelize()
 
@@ -72,7 +75,7 @@ class Digitizer():
 
 if __name__ == '__main__':
     # dpath = 'images/'
-    savepath = 'data/'
+    # savepath = 'data/'
     # dpath = '/mnt/740617C970FA5889/scroll1_21_aout/'
     # dpath = '/home/jamal/spectra'
     # Digitizer(dpath, savepath)

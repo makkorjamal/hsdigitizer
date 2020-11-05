@@ -2,15 +2,23 @@ import configparser as cp
 
 class SpectraConfig:
 
-    def __init__():
+    def __init__(self):
 
-        self.workingPath = ''
-        self.solarAzimuthAngle = 0
-        self.signalNoiseRatio = 100
-        self.dateAndTime = '01/01/1958 00:00'
-        self.spectralRange = [0, 0]
-        self.apodisation = 'TRI'
-        self.rEarth = 6371
-        self.latitudeAndLongitude = []
-        self.resolution = 0.1
-        self.config = cp.ConfigParser()
+        self.spConfig = cp.ConfigParser()
+        # self.spConfig.read('sp_config.ini')
+
+    @classmethod
+    def fill_config(cls, default, spconf):
+        spConf = cls()
+        spConf.spConfig['DEFAULT'] = default 
+        spConf.spConfig['spectra.conf'] = spconf 
+        with open('.sp_config.ini', 'w') as configfile:
+            spConf.spConfig.write(configfile)
+
+    @classmethod
+    def read_conf(cls):
+        spConf = cls()
+        conf = spConf.spConfig
+        conf.read('.sp_config.ini')
+        return conf
+

@@ -3,7 +3,7 @@ import os
 from digiviewer import DigiApp
 from caliviewer import CaliApp
 import ttk
-import configparser as configuration
+from config import SpectraConfig
 
 class Root(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -45,12 +45,25 @@ class MenuBar(tk.Menu):
 class Parameters(tk.Toplevel):
     def __init__(self, *args, **kwargs):
         tk.Toplevel.__init__(self)
+
         self.wm_title("Parameters")
         self.spPath = tk.StringVar()
         self.spPath.set('Spectra path not yet set')
-        self.spConfig = configuration.ConfigParser()
-        self.spConfig.read('sp_config.ini')
-        print(self.spConfig)
+        self.spRes = tk.DoubleVar()
+        self.spRes.set(0.25)
+        self.spAPO = tk.StringVar()
+        self.spAPO.set('TRI')
+        self.spSN = tk.DoubleVar()
+        self.spSN.set(100)
+        self.spLatlon = tk.StringVar()
+        self.spLatlon.set('46.5475, 7.9821')
+        self.spSZA = tk.DoubleVar()
+        self.spREarth = tk.DoubleVar()
+        self.spMinWV = tk.DoubleVar() 
+        self.spMaxWV = tk.DoubleVar()
+        self.spDT = tk.StringVar()
+        self.spDT.set('01/01/1951 00:00AM')
+
 
         self.createWidgets()
 
@@ -62,7 +75,6 @@ class Parameters(tk.Toplevel):
         self.pathFrame.grid(row = 0, column = 0)
         self.pathLabel = tk.Label(self.paramFrame, padx = 5, pady = 5, bg = 'red',  textvariable = self.spPath)
 
-            
         self.spPathBtn = tk.Button(self.paramFrame, text="Set", highlightbackground="#56B426", command=self.ask_directory)
         self.pathLabel.grid(row = 0, column = 0)
         self.spPathBtn.grid(row = 0, column = 1)
@@ -85,44 +97,53 @@ class Parameters(tk.Toplevel):
         self.resEntry.grid(row = 1, column = 1)
 
         self.snLbl = tk.Label(self.sfitParamFrame, text = 'S/N')
-        self.snEntry = tk.Entry(self.sfitParamFrame)
+        self.snEntry = tk.Entry(self.sfitParamFrame, textvariable = self.spSN)
         self.snLbl.grid(row = 1, column = 2)
         self.snEntry.grid(row = 1, column = 3)
 
         self.rearthLbl = tk.Label(self.sfitParamFrame, text = 'Rearth')
-        self.rearthEntry = tk.Entry(self.sfitParamFrame)
+        self.rearthEntry = tk.Entry(self.sfitParamFrame, textvariable = self.spREarth)
         self.rearthLbl.grid(row = 2, column = 0)
         self.rearthEntry.grid(row = 2, column = 1)
 
         self.latlonLbl = tk.Label(self.sfitParamFrame, text = 'Lat/Lon')
-        self.latlonEntry = tk.Entry(self.sfitParamFrame)
+        self.latlonEntry = tk.Entry(self.sfitParamFrame, textvariable = self.spLatlon)
         self.latlonLbl.grid(row = 2, column = 2)
         self.latlonEntry.grid(row = 2, column = 3)
 
         self.minWVLbl = tk.Label(self.sfitParamFrame, text = 'minWL')
-        self.minWVEntry = tk.Entry(self.sfitParamFrame)
+        self.minWVEntry = tk.Entry(self.sfitParamFrame, textvariable = self.spMinWV)
         self.minWVLbl.grid(row = 3, column = 0)
         self.minWVEntry.grid(row = 3, column = 1)
 
         self.maxWVLbl = tk.Label(self.sfitParamFrame, text = 'maxWL')
-        self.maxWVEntry = tk.Entry(self.sfitParamFrame)
+        self.maxWVEntry = tk.Entry(self.sfitParamFrame, textvariable = self.spMaxWV)
         self.maxWVLbl.grid(row = 3, column = 2)
         self.maxWVEntry.grid(row = 3, column = 3)
 
         self.datetimeFrame = tk.Frame(self.paramFrame, padx = 5, pady = 5)
         self.datetimeFrame.grid(row= 2, column = 0)
         self.dtLbl = tk.Label(self.datetimeFrame, text = 'Date/time')
-        self.dtEntry = tk.Entry(self.datetimeFrame)
+        self.dtEntry = tk.Entry(self.datetimeFrame, textvariable = self.spDT)
         self.dtLbl.grid(row = 0, column =0)
         self.dtEntry.grid(row = 0, column = 1)
 
         self.parambtnFrame = tk.Frame(self.paramFrame, padx = 5, pady = 5)
         self.parambtnFrame.grid(row = 3, column = 0)
         self.cancelBtn = tk.Button(self.parambtnFrame, text = 'Cancel', command = self.destroy)
-        self.saveBtn = tk.Button(self.parambtnFrame, text = 'Save', command = self.destroy)
+        self.saveBtn = tk.Button(self.parambtnFrame, text = 'Save', command = self.save_params)
         self.cancelBtn.grid(row = 0, column = 0)
         self.saveBtn.grid(row = 0, column = 1)
-        self.paramFrame.pack() 
+        self.paramFrame.pack()
+
+    def save_params(self):
+        default = {'Resolution':self.spRes.get(), 'Apodization':self.spAPO.get(), 'SignalToNoise':self.spSN.get(), 
+                'Latitude/Longitude':self.spLatlon.get()}
+        spconfig = {'SpectraPath':self.spPath.get(), 'SolarZenith':self.spSZA.get(), 'REarth':self.spREarth.get(),
+                'MinWavelength':self.spMinWV.get(),'MaxWavelength':self.spMaxWV.get(),'DateTime':self.spDT.get()}
+        SpectraConfig.fill_config(default, spconfig)
+        self.destroy()
+
 
     def ask_directory(self):
         dir_param = {}
@@ -134,11 +155,9 @@ class Parameters(tk.Toplevel):
         self.spPath.set(result)
         if os.path.isdir(self.spPath.get()):
             self.pathLabel.config(bg = 'green')
-    def fill_config():
-        self.config['DEFAULT'] = {'Resolution':self.spRes.get(), 'Apodization':self.spAPO.get(), 'SignalToNoise':self.spSN.get()}
-        self.config['spectra.conf'] = {'SpectraPath':self.spPath.get(), 'SolarZenith':self.spSZA.get(), 'REearth':self.spREarth.get(),
-                'MinWavelength':self.spMinWv,'MaxWavelength':self.spMaxWv,'DateTime':self.spDT.get()}
-
+        else:
+            self.pathLabel.config(bg = 'red')
+            self.spPath.set('Not a valid directory')
 
 class StatusBar(ttk.Frame):
 
