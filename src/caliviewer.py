@@ -3,6 +3,7 @@ import threading
 from matplotlib.widgets import SpanSelector
 import tkinter as tk
 import os
+from config import SpectraConfig
 from sklearn.linear_model import LinearRegression
 import ttk
 from utilfunc import read_cal_spec, update_cal_spec
@@ -30,10 +31,8 @@ class CaliApp(tk.Frame):
         self.data = []
         self.x_vals = []
         self.threadnm = ""
-        self.savepath = 'data/'
-        home = os.path.expanduser('~')
+        self.savepath = ""
         self.active = ""
-        self.dpath = ''
         self.threadnm = "digi"
         self.ax1_lines = []
         self.ax2_lines = []
@@ -41,6 +40,7 @@ class CaliApp(tk.Frame):
         self.cal_pix = []
         self.wave_range = []
         self.new_line = []
+        self.peak_is_found = False
 
     def create_widgets(self):
         self.plotframe = tk.LabelFrame(self, padx=3, pady=15)
@@ -67,12 +67,7 @@ class CaliApp(tk.Frame):
         ####
         self.listframe = tk.LabelFrame(self, padx=20, pady=16)
         self.listframe.grid(row=0, column=1)
-        self.spectralist = tk.Listbox(
-            self.listframe,
-            height=plot_height * 10,
-            font=(
-                "Helvetica",
-                12))
+        self.spectralist = tk.Listbox( self.listframe, height=plot_height * 10, font=( "Helvetica", 12))
         self.spectralist.pack(side="left", fill="x")
         self.scrollbar = tk.Scrollbar(self.listframe, orient="vertical")
         self.scrollbar.config(command=self.spectralist.yview)
@@ -85,102 +80,40 @@ class CaliApp(tk.Frame):
 
         self.commandframe = tk.LabelFrame(self, padx=15, pady=15)
         self.commandframe.grid(row=1, column=0)
-        self.cbutton = tk.Button(
-            self.commandframe,
-            text="Calibrate",
-            command=self.calibrate_sp,
-            padx=10,
-            pady=4,
-            font=(
-                "Helvetica",
-                16))
+        self.cbutton = tk.Button( self.commandframe, text="Calibrate", command=self.calibrate_sp, padx=10, pady=4, font=( "Helvetica", 16))
         self.cbutton.grid(row=0, column=1)
 
        # Plot
-        self.pbutton = tk.Button(
-            self.commandframe,
-            text="Plot",
-            command=lambda: self.plot_spectra(),
-            padx=10,
-            pady=4,
-            font=(
-                "Helvetica",
-                16))
+        self.pbutton = tk.Button( self.commandframe, text="Plot", command=lambda: self.plot_spectra(), padx=10, pady=4, font=( "Helvetica", 16))
         self.pbutton.grid(row=0, column=2)
         # self.pbutton['state'] = tk.DISABLED
 
         self.hscale_var = tk.DoubleVar()
         self.hscale_var.set(50)
-        self.hscaler = tk.Scale(
-            self.plotframe,
-            from_=1,
-            to=100,
-            command=self.scaleSpectra,
-            variable=self.hscale_var,
-            orient=tk.HORIZONTAL,
-            length=300)
+        self.hscaler = tk.Scale( self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.hscale_var, orient=tk.HORIZONTAL, length=300)
         self.hscaler.grid(row=1, column=0)
 
         self.hscale_var_p = tk.DoubleVar()
         self.hscale_var_p.set(50)
-        self.hscaler_p = tk.Scale(
-            self.plotframe,
-            from_=1,
-            to=100,
-            command=self.scaleSpectra,
-            variable=self.hscale_var_p,
-            orient=tk.HORIZONTAL,
-            length=300)
+        self.hscaler_p = tk.Scale( self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.hscale_var_p, orient=tk.HORIZONTAL, length=300)
         self.hscaler_p.grid(row=2, column=0)
 
         self.vscale_var = tk.DoubleVar()
         self.vscale_var.set(50)
-        self.vscaler = tk.Scale(
-            self.plotframe,
-            from_=1,
-            to=100,
-            command=self.scaleSpectra,
-            variable=self.vscale_var,
-            orient=tk.VERTICAL,
-            length=300,
-            resolution=0.1)
+        self.vscaler = tk.Scale( self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.vscale_var, orient=tk.VERTICAL, length=300, resolution=0.1)
         self.vscaler.grid(row=0, column=1)
 
         self.vscale_var_p = tk.DoubleVar()
         self.vscale_var_p.set(0)
-        self.vscaler_p = tk.Scale(
-            self.plotframe,
-            from_=50,
-            to=-50,
-            command=self.scaleSpectra,
-            variable=self.vscale_var_p,
-            orient=tk.VERTICAL,
-            length=300,
-            resolution=0.1)
+        self.vscaler_p = tk.Scale( self.plotframe, from_=50, to=-50, command=self.scaleSpectra, variable=self.vscale_var_p, orient=tk.VERTICAL, length=300, resolution=0.1)
         self.vscaler_p.grid(row=0, column=2)
         # save adjusted spectra
 
-        self.sbutton = tk.Button(
-            self.commandframe,
-            text="Save",
-            command=self.save_adjusted_sp,
-            padx=5,
-            pady=4,
-            font=(
-                "Helvetica",
-                16))
+        self.sbutton = tk.Button( self.commandframe, text="Save", command=self.save_adjusted_sp, padx=5, pady=4, font=( "Helvetica", 16))
         self.sbutton.grid(row=0, column=3)
 
        # Quit
-        self.qbutton = tk.Button(
-            self.commandframe,
-            text="Quit",
-            command=self.quit,
-            padx=5,
-            pady=4,
-            font=(
-                "Helvetica",
-                16))
+        self.qbutton = tk.Button( self.commandframe, text="Quit", command=self.quit, padx=5, pady=4, font=( "Helvetica", 16))
         self.qbutton.grid(row=0, column=4)
         # Progress
         # self.progressbar = ttk.Progressbar(self.commandframe, mode='indeterminate')
@@ -188,25 +121,9 @@ class CaliApp(tk.Frame):
         # peak finder frame
         self.peakframe = tk.LabelFrame(self.commandframe, padx=5, pady=5)
         self.peakframe.grid(row=0, column=5)
-        self.sbutton = tk.Button(
-            self.peakframe,
-            text="Smooth",
-            command=self.smooth_sp,
-            padx=5,
-            pady=4,
-            font=(
-                "Helvetica",
-                16))
+        self.sbutton = tk.Button( self.peakframe, text="Smooth", command=self.smooth_sp, padx=5, pady=4, font=( "Helvetica", 16))
         self.sbutton.grid(row=0, column=0)
-        self.peakbutton = tk.Button(
-            self.peakframe,
-            text="Peaks",
-            command=self.find_peaks,
-            padx=5,
-            pady=4,
-            font=(
-                "Helvetica",
-                16))
+        self.peakbutton = tk.Button( self.peakframe, text="Peaks", command=self.find_peaks, padx=5, pady=4, font=( "Helvetica", 16))
         self.peakbutton.grid(row=1, column=0)
         # check spectra frame
         self.checkframe = tk.LabelFrame(self.commandframe, padx=5, pady=5)
@@ -215,41 +132,22 @@ class CaliApp(tk.Frame):
         self.checkvar1.set(1)
         self.checkvar2 = tk.IntVar()
         self.checkvar2.set(1)
-        self.simulated_checkbtn = tk.Checkbutton(
-            self.checkframe,
-            text='Simulated',
-            variable=self.checkvar1,
-            onvalue=1,
-            offvalue=0,
-            command=self.show_selected)
+        self.simulated_checkbtn = tk.Checkbutton( self.checkframe, text='Simulated', variable=self.checkvar1, onvalue=1, offvalue=0, command=self.show_selected)
         self.simulated_checkbtn.pack()
-        self.meassured_checkbtn = tk.Checkbutton(
-            self.checkframe,
-            text='Measured',
-            variable=self.checkvar2,
-            onvalue=1,
-            offvalue=0,
-            command=self.show_selected)
+        self.meassured_checkbtn = tk.Checkbutton( self.checkframe, text='Measured', variable=self.checkvar2, onvalue=1, offvalue=0, command=self.show_selected)
         self.meassured_checkbtn.pack()
-        self.span_select = SpanSelector(
-            self.mwax,
-            self.on_pltselect,
-            'horizontal',
-            useblit=True,
-            rectprops=dict(
-                alpha=0.5,
-                facecolor='red'),
-            button=3)
+        self.span_select = SpanSelector( self.mwax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict( alpha=0.5, facecolor='red'), button=3)
 
     def quit(self):
         self.parent.quit()     # stops mainloop
         self.parent.destroy()  # this is necessary on Windows to prevent
 
     def calibrate_sp(self):
-        cl_fname = '{}_{}'.format(
-            self.sp_range[0],
-            self.sp_range[1]) + '_cal_lines.dat'
+        cl_fname = '{}_{}'.format( self.sp_range[0], self.sp_range[1]) + '_cal_lines.dat' 
         cl_path = os.path.join(self.savepath, cl_fname)
+        if self.peak_is_found == False:
+            self.cal_wv =self.ax1_lines 
+            self.cal_pix = self.ax2_lines
         with open(cl_path, 'w') as f:
             for i, j in zip(self.cal_wv, self.cal_pix):
                 f.write('%4.4f %4.4f\n' % (i, j))
@@ -324,36 +222,21 @@ class CaliApp(tk.Frame):
         self.mwax.clear()
         self.ax.clear()
         try:
-            self.ftir_sp = np.recfromtxt(
-                'data/simulated.dat',
-                names=[
-                    'w',
-                    'i'],
-                encoding='utf8')
+            self.ftir_sp = np.recfromtxt(os.path.join(self.savepath, 'simulated.dat'), names=[ 'w', 'i'], encoding='utf8')
             self.ftir_wv = self.ftir_sp.w
             self.ftir_in = self.ftir_sp.i
-            self.selectedftir_wv = self.ftir_wv[(self.ftir_wv > (
-                self.sp_range[0] - 10)) & (self.ftir_wv < (self.sp_range[1] - 10))]
-            self.selectedftir_in = self.ftir_in[(self.ftir_wv < (
-                self.sp_range[1] - 10)) & (self.ftir_wv > (self.sp_range[0] - 10))]
+            self.selectedftir_wv = self.ftir_wv[(self.ftir_wv > ( self.sp_range[0] )) & (self.ftir_wv < (self.sp_range[1] ))]
+            self.selectedftir_in = self.ftir_in[(self.ftir_wv < ( self.sp_range[1] )) & (self.ftir_wv > (self.sp_range[0] ))]
+            self.savepath = SpectraConfig.read_conf()['spectra.conf']['spectrapath'] 
 
-            self.spectrum = np.loadtxt(
-                os.path.join(
-                    self.savepath,
-                    self.sp_digi),
-                skiprows=0)
+            self.spectrum = np.loadtxt( os.path.join( self.savepath, self.sp_digi), skiprows=0)
             self.xvals = np.arange(len(self.spectrum))
             # self.spectrum = self.spectrum*(-1) + np.max(self.spectrum)
             self.selectedftir_in = self.selectedftir_in * \
                 (-1) + np.max(self.selectedftir_in)
-            self.ax.plot(
-                self.selectedftir_wv,
-                self.selectedftir_in,
-                'r',
-                linewidth=0.3)
+            self.ax.plot( self.selectedftir_wv, self.selectedftir_in, 'r', linewidth=0.3)
             self.ax.set_ylim(self.mwax.get_ylim()[::-1])
-            self.mwaxline, = self.mwax.plot(
-                self.xvals, self.spectrum, linewidth=0.3)
+            self.mwaxline, = self.mwax.plot(self.xvals, self.spectrum, linewidth=0.3)
             self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
             self.canvas.draw_idle()
         except FileNotFoundError:
@@ -362,8 +245,7 @@ class CaliApp(tk.Frame):
     def smooth_sp(self):
         window = 5
         poly_order = 2
-        self.smoothed_sp = savgol_filter(
-            self.spectrum, 6 * window + 1, poly_order, deriv=0)
+        self.smoothed_sp = savgol_filter(self.spectrum, 6 * window + 1, poly_order, deriv=0)
         self.mwax.clear()
         self.mwax.plot(self.smoothed_sp, linewidth=0.3)
         self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
@@ -372,10 +254,8 @@ class CaliApp(tk.Frame):
     def find_peaks(self):
         digi_peaks, _ = find_peaks(self.smoothed_sp, prominence=600)
         sim_peaks, _ = find_peaks(self.selectedftir_in, prominence=0.2)
-        ldigi_peaks = digi_peaks[(digi_peaks > np.min(self.ax2_lines)) & (
-            digi_peaks < np.max(self.ax2_lines))]
-        lsim_peaks = sim_peaks[(sim_peaks > np.min(self.ax1_lines)) & (
-            sim_peaks < np.max(self.ax1_lines))]
+        ldigi_peaks = digi_peaks[(digi_peaks > np.min(self.ax2_lines)) & ( digi_peaks < np.max(self.ax2_lines))]
+        lsim_peaks = sim_peaks[(sim_peaks > np.min(self.ax1_lines)) & ( sim_peaks < np.max(self.ax1_lines))]
         self.mwax.plot(ldigi_peaks, self.smoothed_sp[ldigi_peaks], "xr")
         # self.ax.plot(lsim_peaks, self.selectedftir_in[lsim_peaks], "xb")
         # reg = LinearRegression().fit(ldigi_peaks.reshape(-1,1),lsim_peaks.reshape(-1,1) )
@@ -400,24 +280,14 @@ class CaliApp(tk.Frame):
         # get selected spectra and plot
         elif self.threadnm == "cali":
             try:
-                self.spec, self.wavelength = read_cal_spec(
-                    self.savepath, '{}_{}_calibrated.dat'.format(
-                        self.sp_range[0], self.sp_range[1]))
+                self.spec, self.wavelength = read_cal_spec( '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]))
                 self.ax.clear()
 
                 self.selectedftir_in = self.selectedftir_in * \
                     (-1) + np.max(self.selectedftir_in)
-                self.ax.plot(
-                    self.selectedftir_wv,
-                    self.selectedftir_in,
-                    'r',
-                    linewidth=0.3)
-                self.axline, = self.ax.plot(
-                    self.wavelength, self.spec / np.max(self.spec), linewidth=0.3)
-                self.hscaler.configure(
-                    from_=np.min(
-                        self.wavelength), to=np.max(
-                        self.wavelength), resolution=0.01)
+                self.ax.plot( self.selectedftir_wv, self.selectedftir_in, 'r', linewidth=0.3)
+                self.axline, = self.ax.plot( self.wavelength, self.spec / np.max(self.spec), linewidth=0.3)
+                self.hscaler.configure( from_=np.min( self.wavelength), to=np.max( self.wavelength), resolution=0.01)
                 # self.hscaler_p.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.01)
                 self.mean_wv = (np.min(self.wavelength) +
                                 np.max(self.wavelength)) / 2
@@ -454,18 +324,11 @@ class CaliApp(tk.Frame):
         if event.dblclick:
             if event.inaxes == self.ax:
                 self.ax1_lines.append(event.xdata)
-                self.ax1l = self.ax.vlines(
-                    self.ax1_lines, 0, 1, linestyles='solid', linewidth=0.5)
+                self.ax1l = self.ax.vlines(self.ax1_lines, 0, 1, linestyles='solid', linewidth=0.5)
                 self.canvas.draw_idle()
             elif event.inaxes == self.mwax:
                 self.ax2_lines.append(event.xdata)
-                self.ax2l = self.mwax.vlines(
-                    self.ax2_lines,
-                    0,
-                    1,
-                    transform=self.mwax.get_xaxis_transform(),
-                    linestyles='solid',
-                    linewidth=0.5)
+                self.ax2l = self.mwax.vlines( self.ax2_lines, 0, 1, transform=self.mwax.get_xaxis_transform(), linestyles='solid', linewidth=0.5)
                 self.canvas.draw_idle()
             else:
                 pass
@@ -487,9 +350,7 @@ class CaliApp(tk.Frame):
             print("First plot spectra to scale")
 
     def save_adjusted_sp(self):
-        update_cal_spec(
-            self.savepath, '{}_{}_calibrated.dat'.format(
-                self.sp_range[0], self.sp_range[1]), [ np.min( self.new_line), np.max( self.new_line)])
+        update_cal_spec( self.savepath, '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]), [ np.min( self.new_line), np.max( self.new_line)])
 
     def on_pltselect(self, wv_min, wv_max):
 

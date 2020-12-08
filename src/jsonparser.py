@@ -11,7 +11,7 @@ class JsonParser:
     def save_json(self):
         #save the spectrum.py object in a json file
 
-       with open(os.path.join(self.jpath,"spectra_file.json"), "w") as write_file:
+       with open(os.path.join("spectra_file.json"), "w") as write_file:
            json.dump([obj.__dict__ for obj in self.spectrums], write_file)
 
     # def update_json(self, filename, dt = []):
@@ -27,15 +27,9 @@ class JsonParser:
         #read the saved json.
         #saved in a Spectrum object.
 
-        with open(os.path.join(self.jpath,filename), "r") as read_file:
+        with open(os.path.join(filename), "r") as read_file:
             data = json.load(read_file)
         for d in data:
             sp = Spectrum(d['img_name'],d['sp_name'],d['calsp_name'], d['calsplines_name'], d['sp_range'])
             self.spectrums.append(sp)
         return self.spectrums 
-if __name__ == '__main__':
-    #spectrums = []
-    jsparser = JsonParser('data/',[])
-    data = jsparser.read_json('spectra_file.json')
-    for spectrum in data:
-        print(spectrum.__dict__)

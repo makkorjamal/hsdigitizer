@@ -61,8 +61,6 @@ class Calibrator():
         self.sp_digitized = sp_digitized
         self.sp_digitized = self.sp_digitized*(-1)+np.max(self.sp_digitized)
         self.cal_name = cal_name
-        # self.data = np.recfromtxt(os.path.join(self.path, self.fname), names=['y'], skip_header=0, encoding='utf8')
-        # self.y = self.data.y*(-1)+np.max(self.data.y)
         self.yoffset = 0
         self.y2 = (self.sp_digitized-self.yoffset)/np.max(self.sp_digitized-self.yoffset)
         self.x2 = np.arange(len(self.y2))
@@ -71,14 +69,3 @@ class Calibrator():
         self.read_cali_lines()
         self.reduce_points()
         self.print_sfit_readable_spectrum()
-if __name__ == '__main__':
-    #if len(sys.argv)==2:
-    fname = '/home/jamal/venvs/hsdigitizer/src/data/sroll_17_avril_02_digitized.dat'#sys.argv[1]
-    path = 'data/'
-    Calibrator(path, fname)
-    #else:
-        #print('Add image filename as cmdline arg ....')
-
-
-
-

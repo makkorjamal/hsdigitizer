@@ -122,8 +122,8 @@ if __name__=="__main__":
     # sza_calc('02/10/1951 11:56', 46.5475, 7.9853)
     # find_sprange(None, None)
 
-    # image_slicer.slice( "/media/mokkar/9C33-6BBD/combined_1176_1140_.tif", col=6, row=1, save=True, DecompressionBombWarning=False)
-    read_spectra('artspec/1.final', True)
+    image_slicer.slice( "2141_2175.tif", col=3, row=1, save=True, DecompressionBombWarning=False)
+    # read_spectra('artspec/1.final', True)
     # califiles = glob.glob('data/*calibrated.dat')
     # _cal = np.loadtxt(califiles[1], skiprows = 4)
     # yhat = savgol_filter(_cal, 51, 12)

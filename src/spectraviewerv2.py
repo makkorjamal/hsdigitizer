@@ -147,7 +147,7 @@ class Parameters(tk.Toplevel):
 
     def ask_directory(self):
         dir_param = {}
-        dir_param['initialdir'] = os.path.expanduser('~')#os.environ["HOME"]
+        dir_param['initialdir'] = os.path.expanduser('.')#os.environ["HOME"]
         dir_param['mustexist'] = False
         dir_param['parent'] = self
         dir_param['title'] = 'Please select directory'

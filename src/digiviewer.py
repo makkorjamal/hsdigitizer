@@ -1,6 +1,7 @@
 import threading
 import tkinter as tk
 import os
+from config import SpectraConfig
 import ttk
 import numpy as np
 from matplotlib.backends.backend_tkagg import (
@@ -18,16 +19,12 @@ class DigiApp(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.create_widgets()
-        self.savepath = 'data/'
-        try:
-            jsparser = JsonParser(self.savepath,[])
-            self.data = jsparser.read_json('spectra_file.json')
-        except FileNotFoundError:
-            self.data = []
         self.threadnm = ""
         home = os.path.expanduser('~')
+        self.data = []
         self.active = ""
-        self.dpath = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
+        self.out_dir = ''
+
     
     def create_widgets(self):
         self.plotframe= tk.LabelFrame(self, padx = 10, pady = 10)
@@ -88,10 +85,21 @@ class DigiApp(tk.Frame):
         This function runs the digitazation process in parallel
         Parameters: 
             dpath: path where the images to be digitized are stored
-            savepath: path where the digitzed .bat file is saved
+            base_dir: path where the digitzed .bat file is saved
         """
 
-        Digitizer(self.dpath, self.savepath)
+        try:
+
+            self.base_dir = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
+            jsparser = JsonParser(self.base_dir,[])
+            self.data = jsparser.read_json('spectra_file.json')
+            self.out_dir = os.makedirs(os.path.join(self.base_dir,'digitized/'), exist_ok=True)
+
+        except FileNotFoundError:
+            self.data = []
+
+        self.dpath = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
+        Digitizer(self.base_dir, self.out_dir)
 
     def start_multip_thread(self, threadnm):
         """
@@ -110,7 +118,7 @@ class DigiApp(tk.Frame):
                 self.g_thread.start()
                 self.parent.after(20, self.check_g_thread)
             else:
-                self.populate_list(self.dpath)
+                self.populate_list()
         else:
             self.threadnm = threadnm
             self.dbutton['state'] = tk.DISABLED
@@ -127,16 +135,16 @@ class DigiApp(tk.Frame):
             self.parent.after(20, self.check_g_thread)
         else:
             self.progressbar.stop()
-            self.populate_list(self.dpath)
+            self.populate_list()
 
-    def populate_list(self,dpath):
+    def populate_list(self):
         """
         This fucntion populates the list by reading the json file that contains:
             *the name of the image*
             *the path of the digitzed spectrum*
         """
 
-        jsparser = JsonParser(self.savepath,[])
+        jsparser = JsonParser(self.base_dir,[])
         try:
             self.data = jsparser.read_json('spectra_file.json')
         except FileNotFoundError:
@@ -160,7 +168,7 @@ class DigiApp(tk.Frame):
                     self.sp_selected = od.sp_name
                     self.img_selected = od.img_name
             if self.threadnm == "digi":
-                im_path = os.path.join(self.dpath,self.img_selected)
+                im_path = os.path.join(self.base_dir,self.img_selected)
                 org_img = cv2.imread(im_path,cv2.COLOR_BGR2RGB)
                 resized_img = cv2.resize(org_img,(600,300))
                 RGB_img = cv2.cvtColor(org_img, cv2.COLOR_BGR2RGB)
@@ -176,7 +184,7 @@ class DigiApp(tk.Frame):
         """
         try:
             if self.threadnm == "digi":
-                self.spectrum = np.loadtxt(os.path.join(self.savepath, self.sp_selected))
+                self.spectrum = np.loadtxt(os.path.join(self.base_dir, self.sp_selected))
             x_vals = np.arange(0,len(self.spectrum))
             self.ax.plot(x_vals,self.spectrum, linewidth = 0.3)
             self.canvas.draw()

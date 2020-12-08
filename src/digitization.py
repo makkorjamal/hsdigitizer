@@ -12,7 +12,8 @@ from config import SpectraConfig
 import matplotlib.pyplot as plt
 from spectrum import Spectrum
 from jsonparser import JsonParser
-import glob
+from pathlib import Path
+from glob import glob
 
 class Digitizer():
 
@@ -20,15 +21,15 @@ class Digitizer():
         self.digitized_spectrum = []
 
         self.dpath = dpath
-        min_wavelength = float(SpectraConfig.read_conf()['spectra.conf']['minwavelength']) 
-        max_wavelength = float(SpectraConfig.read_conf()['spectra.conf']['maxwavelength'])
-        self.sp_range = create_sprange(min_wavelength, max_wavelength, 6)
+        self.sp_range = []
         self.savepath = savepath
         self.parallelize()
 
     def parallelize(self):
-        # self.img_names = sorted(glob.glob(os.path.join(self.dpath,'*.tif')))
-        self.img_names = sorted(os.listdir(self.dpath))
+        self.img_names =  sorted(glob(os.path.join(self.dpath,'*.png')))
+        min_wavelength = float(SpectraConfig.read_conf()['spectra.conf']['minwavelength'])
+        max_wavelength = float(SpectraConfig.read_conf()['spectra.conf']['maxwavelength'])
+        self.sp_range = create_sprange(min_wavelength, max_wavelength, len(self.img_names))
         print(self.img_names)
 
         self.spectrums = []
@@ -42,19 +43,17 @@ class Digitizer():
 
     def digitize_spectrum(self,img_fname, sp_range):
 
-        # self.img = cv2.imread(os.path.join(self.dpath, img_fname))
         img = cv2.imread(os.path.join(self.dpath, img_fname))
         self.img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         self.b, self.g, _ = cv2.split(self.img)
-        # self.digitized_spectrum = np.array([])
         for i in range(self.img.shape[1]):
             self.digitized_spectrum.append(self.digitize_point(i))
 
         if self.digitized_spectrum:
             impath = img_fname
-            sp_name = img_fname[:-4]+'_digitized'+'.dat'
-            spath = os.path.join(self.savepath,sp_name)
-            with open(spath,'w') as f:
+            sp_name = img_fname[:-4] + '_digitized'+'.dat'
+            spath = sp_name
+            with open(os.path.join(spath), 'w') as f:
                 for i in self.digitized_spectrum:
                     f.write('%4.2f\n'%i)
             print('{}'.format(spath))
@@ -72,14 +71,4 @@ class Digitizer():
                 return np.nanmean(x[cond])
             except RuntimeWarning:
                 return np.NaN
-
-if __name__ == '__main__':
-    # dpath = 'images/'
-    # savepath = 'data/'
-    # dpath = '/mnt/740617C970FA5889/scroll1_21_aout/'
-    # dpath = '/home/jamal/spectra'
-    # Digitizer(dpath, savepath)
-
-
-
 
