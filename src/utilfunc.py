@@ -1,4 +1,5 @@
 import image_slicer
+import csv
 from sklearn.preprocessing import normalize
 import pytz
 import matplotlib
@@ -52,7 +53,9 @@ def update_cal_spec(savepath,name, new_wl):
     lines[3][1].replace(lines[3][1], str(new_wl[1]) )
     new_sp_file = os.path.join(savepath, name)
     with open(new_sp_file, 'w+') as cal_fil_id:
-        cal_fil_id.write(lines)
+        cal_fil_id.write(''.join(lines) + '\n')
+        # writer = csv.writer(cal_fil_id, delimiter=' ',  quoting=csv.QUOTE_NONE)
+        # writer.writerow(lines)
         print("wrote new file")
 
 
@@ -122,7 +125,7 @@ if __name__=="__main__":
     # sza_calc('02/10/1951 11:56', 46.5475, 7.9853)
     # find_sprange(None, None)
 
-    image_slicer.slice( "2141_2175.tif", col=3, row=1, save=True, DecompressionBombWarning=False)
+    image_slicer.slice( "2152_2179.tif", col=3, row=1, save=True, DecompressionBombWarning=False)
     # read_spectra('artspec/1.final', True)
     # califiles = glob.glob('data/*calibrated.dat')
     # _cal = np.loadtxt(califiles[1], skiprows = 4)
