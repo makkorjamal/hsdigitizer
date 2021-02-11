@@ -1,30 +1,19 @@
 #!/usr/bin/python3
 from __future__ import print_function, division
 import os, pickle, sys
+from config import SpectraConfig
 import numpy as np
 import datetime as dt
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons, TextBox
 from scipy.optimize import curve_fit
 import pdb
+import datetime
+from pysolar.solar import *
 
 
 class Calibrator():
 
-    def print_sfit_readable_spectrum(self, sza=63.0, latlon=(46.55, 7.98), d=dt.datetime(1951, 4, 15, 7, 30, 0), res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
-        spc = self.yreduced
-        wvn_bounds = [np.min(self.xcal), np.max(self.xcal)]
-        fname = os.path.join(self.savepath, self.cal_name.replace('cal_lines.dat', 'calibrated.dat'))
-        #pdb.set_trace()
-        s = ' %4.2f  %8.4f  %4.2f  %5.2f  %5i\n'%(sza, rearth, latlon[0], latlon[1] , sn)
-        s = s + d.strftime(' %Y %m %d %H %M %S\n')
-        s = s + d.strftime(' %d/%m/%Y, %H:%M:%S')+', RES=%5.4f  APOD FN = %3s\n'%(res, apo)
-        s = s + ' %7.3f %7.3f %11.10f %7i'%(wvn_bounds[0], wvn_bounds[1], (wvn_bounds[1]-wvn_bounds[0])/float(len(spc)), len(spc))
-        for i in spc:
-            s+='\n %8.5f'%(i)
-        with open(fname, 'w') as f:
-            f.write(s)
-        print('Wrote file', fname)
     
     def read_cali_lines(self):
         fname = os.path.join(self.savepath, self.cal_name)
@@ -68,4 +57,3 @@ class Calibrator():
         self.ax1_lines, self.ax2_lines = [], []
         self.read_cali_lines()
         self.reduce_points()
-        self.print_sfit_readable_spectrum()

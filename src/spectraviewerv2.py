@@ -62,7 +62,7 @@ class Parameters(tk.Toplevel):
         self.spMinWV = tk.DoubleVar() 
         self.spMaxWV = tk.DoubleVar()
         self.spDT = tk.StringVar()
-        self.spDT.set('01/01/1951 00:00AM')
+        self.spDT.set('01/01/1951 00:00')
 
 
         self.createWidgets()

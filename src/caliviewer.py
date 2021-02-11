@@ -1,4 +1,5 @@
 from matplotlib.lines import Line2D
+import datetime
 import threading
 from matplotlib.widgets import SpanSelector
 import tkinter as tk
@@ -20,6 +21,7 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.figure import Figure
 from jsonparser import JsonParser
 import cv2
+from pysolar.solar import *
 from calibration import Calibrator
 
 
@@ -152,7 +154,9 @@ class CaliApp(tk.Frame):
             for i, j in zip(self.cal_wv, self.cal_pix):
                 f.write('%4.4f %4.4f\n' % (i, j))
 
-        Calibrator(self.savepath, self.spectrum, cl_fname)
+        self.calibrator = Calibrator(self.savepath, self.spectrum, cl_fname)
+        self.spec= self.calibrator.yreduced
+        self.wavelength  = np.linspace(np.min(self.calibrator.xcal), np.max(self.calibrator.xcal), len(self.spec))
         self.threadnm = "cali"
 
     def start_multip_thread(self, threadnm):
@@ -207,6 +211,11 @@ class CaliApp(tk.Frame):
             if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
                 # self.canvas.draw()
+                self.ax.clear()
+                self.mwax.clear()
+                self.calax.clear()
+                self.ax1_lines = []
+                self.ax2_lines = []
             elif self.threadnm == "digi":
                 self.threadnm = "digi"
                 # self.populate_list()
@@ -275,14 +284,13 @@ class CaliApp(tk.Frame):
         print(self.cal_wv)
 
     def plot_spectra(self):
+        self.ax.clear()
         if self.threadnm == "digi":
             self.populate_list()
         # get selected spectra and plot
         elif self.threadnm == "cali":
             try:
-                self.spec, self.wavelength = read_cal_spec( '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]))
-                self.ax.clear()
-
+                # self.spec, self.wavelength = read_cal_spec( '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]))
                 self.selectedftir_in = self.selectedftir_in * \
                     (-1) + np.max(self.selectedftir_in)
                 self.ax.plot( self.selectedftir_wv, self.selectedftir_in, 'r', linewidth=0.3)
@@ -350,7 +358,29 @@ class CaliApp(tk.Frame):
             print("First plot spectra to scale")
 
     def save_adjusted_sp(self):
-        update_cal_spec( self.savepath, '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]), [ np.min( self.new_line), np.max( self.new_line)])
+        config = SpectraConfig.read_conf()
+        self.sp_date = config['spectra.conf']['DateTime']
+        self.latlon = np.array(config['spectra.conf']['Latitude/Longitude'].split(','), dtype = float)
+        self.date_time_obj = datetime.datetime.strptime(self.sp_date, '%d/%m/%Y %H:%M').replace(tzinfo=datetime.timezone.utc) - datetime.timedelta(hours=1)
+        self.sza = float(90) - get_altitude(float(self.latlon[0]), float(self.latlon[1]), self.date_time_obj)
+        self.print_sfit_readable_spectrum(float(self.sza), self.latlon, self.date_time_obj)
+
+        # update_cal_spec( self.savepath, '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]), [ np.min( self.new_line), np.max( self.new_line)])
+
+    def print_sfit_readable_spectrum(self, sza=63.0, latlon=(46.55, 7.98), d=datetime.datetime(1951, 4, 15, 7, 30, 0), res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
+        spc = self.spec
+        wvn_bounds = [np.min(self.new_line), np.max(self.new_line)]
+        fname = os.path.join(self.savepath, '{wvn_bounds[0]}_{wvn_bounds[1]}_calibrated.dat')
+        #pdb.set_trace()
+        s = ' %4.2f  %8.4f  %4.2f  %5.2f  %5i\n'%(sza, rearth, latlon[0], latlon[1] , sn)
+        s = s + d.strftime(' %Y %m %d %H %M %S\n')
+        s = s + d.strftime(' %d/%m/%Y, %H:%M:%S')+', RES=%5.4f  APOD FN = %3s\n'%(res, apo)
+        s = s + ' %7.3f %7.3f %11.10f %7i'%(wvn_bounds[0], wvn_bounds[1], (wvn_bounds[1]-wvn_bounds[0])/float(len(spc)), len(spc))
+        for i in spc:
+            s+='\n %8.5f'%(i)
+        with open(fname, 'w') as f:
+            f.write(s)
+        print('Wrote file', fname)
 
     def on_pltselect(self, wv_min, wv_max):
 

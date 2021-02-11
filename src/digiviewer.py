@@ -97,6 +97,7 @@ class DigiApp(tk.Frame):
 
         except FileNotFoundError:
             self.data = []
+            self.base_dir = ""
 
         self.dpath = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
         Digitizer(self.base_dir, self.out_dir)
@@ -131,11 +132,14 @@ class DigiApp(tk.Frame):
         """
         This function checks if the thread is still running and stops the progress when the thread is dead
         """
-        if self.g_thread.is_alive():
-            self.parent.after(20, self.check_g_thread)
-        else:
-            self.progressbar.stop()
-            self.populate_list()
+        try:
+            if self.g_thread.is_alive():
+                self.parent.after(20, self.check_g_thread)
+            else:
+                self.progressbar.stop()
+                self.populate_list()
+        except:
+            print("Set paramters first")
 
     def populate_list(self):
         """
