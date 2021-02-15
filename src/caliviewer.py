@@ -43,6 +43,8 @@ class CaliApp(tk.Frame):
         self.wave_range = []
         self.new_line = []
         self.peak_is_found = False
+        self.spectra = []
+        self.wavelength = []
 
     def create_widgets(self):
         self.plotframe = tk.LabelFrame(self, padx=3, pady=15)
@@ -156,8 +158,12 @@ class CaliApp(tk.Frame):
 
         self.calibrator = Calibrator(self.savepath, self.spectrum, cl_fname)
         self.spec= self.calibrator.yreduced
+        self.spectra.append(self.spec)
         self.wavelength  = np.linspace(np.min(self.calibrator.xcal), np.max(self.calibrator.xcal), len(self.spec))
+        self.ax.clear()
         self.threadnm = "cali"
+        self.plot_spectra()
+        # self.threadnm = "digi"
 
     def start_multip_thread(self, threadnm):
 
@@ -200,22 +206,26 @@ class CaliApp(tk.Frame):
     def on_list_select(self, event):
 
         self.active = self.spectralist.get(tk.ACTIVE)
+        self.threadnm = "digi"
         if self.data:
             for od in self.data:
                 if self.active == od.calsp_name and self.threadnm == "cali":
                     self.sp_selected = od.calsp_name
+                    print(self.sp_selected)
                     self.sp_range = od.sp_range
+                    print(self.sp_range)
                 if self.active == od.img_name and self.threadnm == "digi":
                     self.sp_digi = od.sp_name
                     self.sp_range = od.sp_range
             if self.threadnm == "cali":
                 self.pbutton['state'] = "normal"
-                # self.canvas.draw()
+
                 self.ax.clear()
                 self.mwax.clear()
                 self.calax.clear()
                 self.ax1_lines = []
                 self.ax2_lines = []
+                self.canvas.draw_idle()
             elif self.threadnm == "digi":
                 self.threadnm = "digi"
                 # self.populate_list()
@@ -251,6 +261,27 @@ class CaliApp(tk.Frame):
         except FileNotFoundError:
             print("File Not found")
 
+    def plot_spectra(self):
+        self.ax.clear()
+        if self.threadnm == "digi":
+            self.populate_list()
+        # get selected spectra and plot
+        elif self.threadnm == "cali":
+            try:
+                # self.spec, self.wavelength = read_cal_spec( '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]))
+                self.selectedftir_in = self.selectedftir_in * \
+                    (-1) + np.max(self.selectedftir_in)
+                self.ax.plot( self.selectedftir_wv, self.selectedftir_in, 'r', linewidth=0.3)
+                self.axline, = self.ax.plot( self.wavelength, self.spec / np.max(self.spec), linewidth=0.3)
+                self.hscaler.configure( from_=np.min( self.wavelength), to=np.max( self.wavelength), resolution=0.01)
+                # self.hscaler_p.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.01)
+                self.mean_wv = (np.min(self.wavelength) +
+                                np.max(self.wavelength)) / 2
+                self.hscale_var.set(int(self.mean_wv))
+                # self.hscale_var_p.set(int(self.mean_wv))
+                self.canvas.draw()
+            except FileNotFoundError:
+                print('File not found')
     def smooth_sp(self):
         window = 5
         poly_order = 2
@@ -283,27 +314,6 @@ class CaliApp(tk.Frame):
         print(lsim_peaks)
         print(self.cal_wv)
 
-    def plot_spectra(self):
-        self.ax.clear()
-        if self.threadnm == "digi":
-            self.populate_list()
-        # get selected spectra and plot
-        elif self.threadnm == "cali":
-            try:
-                # self.spec, self.wavelength = read_cal_spec( '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]))
-                self.selectedftir_in = self.selectedftir_in * \
-                    (-1) + np.max(self.selectedftir_in)
-                self.ax.plot( self.selectedftir_wv, self.selectedftir_in, 'r', linewidth=0.3)
-                self.axline, = self.ax.plot( self.wavelength, self.spec / np.max(self.spec), linewidth=0.3)
-                self.hscaler.configure( from_=np.min( self.wavelength), to=np.max( self.wavelength), resolution=0.01)
-                # self.hscaler_p.configure(from_ = self.sp_range[0], to = self.sp_range[1], resolution = 0.01)
-                self.mean_wv = (np.min(self.wavelength) +
-                                np.max(self.wavelength)) / 2
-                self.hscale_var.set(int(self.mean_wv))
-                # self.hscale_var_p.set(int(self.mean_wv))
-                self.canvas.draw()
-            except FileNotFoundError:
-                print('File not found')
 
     def show_selected(self):
         if (self.checkvar1.get() == 1) & (self.checkvar2.get() == 0):
@@ -351,7 +361,7 @@ class CaliApp(tk.Frame):
                 (hscale_value / self.mean_wv) + hscale_value_p / self.mean_wv
             # y_vals = self.spectrum * (vscale_value/50) + (vscale_value_p/50)
             self.axline.set_xdata(x_vals)
-            self.new_line = x_vals
+            self.new_line.append(x_vals)
             # self.axline.set_ydata(y_vals)
             self.canvas.draw_idle()
         else:
@@ -368,9 +378,10 @@ class CaliApp(tk.Frame):
         # update_cal_spec( self.savepath, '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]), [ np.min( self.new_line), np.max( self.new_line)])
 
     def print_sfit_readable_spectrum(self, sza=63.0, latlon=(46.55, 7.98), d=datetime.datetime(1951, 4, 15, 7, 30, 0), res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
-        spc = self.spec
+        self.new_line = np.hstack(self.new_line)
+        spc = np.hstack(self.spectra)
         wvn_bounds = [np.min(self.new_line), np.max(self.new_line)]
-        fname = os.path.join(self.savepath, '{wvn_bounds[0]}_{wvn_bounds[1]}_calibrated.dat')
+        fname = os.path.join(self.savepath, '{:.2f}_{:.2f}_calibrated.dat'.format(wvn_bounds[0],wvn_bounds[1]))
         #pdb.set_trace()
         s = ' %4.2f  %8.4f  %4.2f  %5.2f  %5i\n'%(sza, rearth, latlon[0], latlon[1] , sn)
         s = s + d.strftime(' %Y %m %d %H %M %S\n')
