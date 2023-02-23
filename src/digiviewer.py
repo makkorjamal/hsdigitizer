@@ -1,13 +1,8 @@
 import threading
 import tkinter as tk
 import os
-<<<<<<< HEAD
 from config import SpectraConfig
 from tkinter import ttk
-=======
-from src.config import SpectraConfig
-import ttk
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 import numpy as np
 #from matplotlib.backends.backend_tkagg import (
 #    FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -15,20 +10,18 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 # Implement the default Matplotlib key bindings.
 from matplotlib.figure import Figure
-from src.digitization import Digitizer
-from src.jsonparser import JsonParser
-from src.config import SpectraConfig
+from digitization import Digitizer
+from jsonparser import JsonParser
+from config import SpectraConfig
 import cv2
-<<<<<<< HEAD
 from tkinter.messagebox import showerror
-=======
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 class DigiApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.create_widgets()
         self.threadnm = ""
+        home = os.path.expanduser('~')
         self.data = []
         self.active = ""
         self.out_dir = ''
@@ -40,11 +33,7 @@ class DigiApp(tk.Frame):
         self.tbframe.grid(row=0, column=0)
 
         self.plotframe= tk.LabelFrame(self, padx = 10, pady = 10)
-<<<<<<< HEAD
         self.plotframe.grid(row = 1, column = 0)
-=======
-        self.plotframe.grid(row = 0, column = 0)
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
         screen_dpi = 350 
         self.parent.update()
         plot_width = int(0.9*(self.parent.winfo_width()/screen_dpi))
@@ -193,15 +182,9 @@ class DigiApp(tk.Frame):
             if self.threadnm == "digi":
                 im_path = os.path.join(self.base_dir,self.img_selected)
                 org_img = cv2.imread(im_path,cv2.COLOR_BGR2RGB)
-<<<<<<< HEAD
                 self.RGB_img = cv2.cvtColor(org_img, cv2.COLOR_BGR2RGB)
                 #self.ax.clear()
                 self.rgbline = self.ax.imshow(self.RGB_img ,interpolation= None , cmap='viridis',aspect='auto')
-=======
-                RGB_img = cv2.cvtColor(org_img, cv2.COLOR_BGR2RGB)
-                self.ax.clear()
-                self.ax.imshow(RGB_img ,interpolation= None , cmap='viridis',aspect='auto')
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
                 self.canvas.draw()
                 self.pbutton['state'] = "normal"
                 self.RGB_img = cv2.flip(self.RGB_img, 0)

@@ -2,34 +2,19 @@ import datetime
 import threading
 import tkinter as tk
 import os
-<<<<<<< HEAD
 from config import SpectraConfig
 from pybaselines import Baseline
 import matplotlib.gridspec as gridspec
 from scipy.signal import find_peaks
-=======
-from src.config import SpectraConfig
-from src.utilfunc import read_cal_spec, update_cal_spec
-import matplotlib.gridspec as gridspec
-from scipy.signal import find_peaks
-from scipy.signal import savgol_filter
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 # Implement the default Matplotlib key bindings.
 from matplotlib.figure import Figure
-<<<<<<< HEAD
 from jsonparser import JsonParser
 from pysolar.solar import *
 from calibration import Calibrator
 import itertools as it
 from tkinter.messagebox import showerror, showinfo
-=======
-from src.jsonparser import JsonParser
-from pysolar.solar import *
-from src.calibration import Calibrator
-import sys
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 
 
 class CaliApp(tk.Frame):
@@ -95,7 +80,6 @@ class CaliApp(tk.Frame):
         self.commandframe.grid(row=2, column=0)
 
        # Plot
-<<<<<<< HEAD
         self.pbutton = tk.Button( self.commandframe, text="Show", command=lambda: self.plot_spectra(), \
                                  padx=10, pady=4, font=( "Helvetica", 16))
         self.pbutton.grid(row=0, column=1)
@@ -105,14 +89,6 @@ class CaliApp(tk.Frame):
        # Calibrate
         self.cbutton = tk.Button( self.commandframe, text="Calibrate", command=self.calibrate_sp,\
                                   padx=10, pady=4, font=( "Helvetica", 16))
-=======
-        self.pbutton = tk.Button( self.commandframe, text="Show", command=lambda: self.plot_spectra(), padx=10, pady=4, font=( "Helvetica", 16))
-        self.pbutton.grid(row=0, column=1)
-        # self.pbutton['state'] = tk.DISABLED
-
-       # Calibrate
-        self.cbutton = tk.Button( self.commandframe, text="Calibrate", command=self.calibrate_sp, padx=10, pady=4, font=( "Helvetica", 16))
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
         self.cbutton.grid(row=0, column=2)
 
         self.hscale_var = tk.DoubleVar()
@@ -151,21 +127,11 @@ class CaliApp(tk.Frame):
                                   command=self.detect_baseline, padx=5, pady=4, font=( "Helvetica", 16))
         self.sbutton.grid(row=0, column=0)
         self.checkvar1 = tk.IntVar()
-<<<<<<< HEAD
         self.poly_checkbtn = tk.Radiobutton( self.baselineframe, text='Poly', variable=self.checkvar1, value=1)
         self.checkvar1.set(0)
         self.poly_checkbtn.grid(row=0, column=1)
         self.morpth_checkbtn = tk.Radiobutton( self.baselineframe, text='Morph', variable=self.checkvar1, value=0)
         self.morpth_checkbtn.grid(row=0, column=2)
-=======
-        self.checkvar1.set(1)
-        self.checkvar2 = tk.IntVar()
-        self.checkvar2.set(1)
-        self.simulated_checkbtn = tk.Checkbutton( self.checkframe, text='Simulated', variable=self.checkvar1, onvalue=1, offvalue=0, command=self.show_selected)
-        self.simulated_checkbtn.pack()
-        self.meassured_checkbtn = tk.Checkbutton( self.checkframe, text='Measured', variable=self.checkvar2, onvalue=1, offvalue=0, command=self.show_selected)
-        self.meassured_checkbtn.pack()
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
         # self.span_select = SpanSelector( self.mwax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict( alpha=0.5, facecolor='red'), button=3)
 
     def quit(self):
@@ -284,38 +250,21 @@ class CaliApp(tk.Frame):
         self.threadnm = "digi"
         self.mwax.clear()
         self.ax.clear()
-        simulated_spc = os.path.join(sys._MEIPASS,'simulated.dat')
         try:
-<<<<<<< HEAD
             simulated_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'simulated.npz')
             simulated_data = np.load(simulated_path)
             self.ftir_wv= simulated_data['simulated_wn']
             self.ftir_in= simulated_data['simulated_in']
-=======
-            self.ftir_sp = np.recfromtxt(simulated_spc, names=[ 'w', 'i'], encoding='utf8')
-            self.ftir_wv = self.ftir_sp.w
-            self.ftir_in = self.ftir_sp.i
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
             self.selectedftir_wv = self.ftir_wv[(self.ftir_wv > ( self.sp_range[0] )) & (self.ftir_wv < (self.sp_range[1] ))]
             self.selectedftir_in = self.ftir_in[(self.ftir_wv < ( self.sp_range[1] )) & (self.ftir_wv > (self.sp_range[0] ))]
             self.savepath = SpectraConfig.read_conf()['spectra.conf']['spectrapath'] 
 
             self.spectrum = np.loadtxt( os.path.join( self.savepath, self.sp_digi), skiprows=0)
-<<<<<<< HEAD
             self.pixel_xvals = np.arange(len(self.spectrum))
     
             self.ax.plot( self.selectedftir_wv, self.selectedftir_in, 'r', linewidth=0.7)
             self.ax.set_ylim(self.mwax.get_ylim()[::-1])
             self.mwaxline, = self.mwax.plot(self.pixel_xvals, self.spectrum, linewidth=0.7)
-=======
-            self.xvals = np.arange(len(self.spectrum))
-            # self.spectrum = self.spectrum*(-1) + np.max(self.spectrum)
-            self.selectedftir_in = self.selectedftir_in * \
-                (-1) + np.max(self.selectedftir_in)
-            self.ax.plot( self.selectedftir_wv, self.selectedftir_in, 'r', linewidth=0.7)
-            self.ax.set_ylim(self.mwax.get_ylim()[::-1])
-            self.mwaxline, = self.mwax.plot(self.xvals, self.spectrum, linewidth=0.7)
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
             self.mwax.set_ylim(self.mwax.get_ylim()[::-1])
             self.ax.invert_yaxis()
             self.mwax.invert_yaxis()
@@ -331,12 +280,6 @@ class CaliApp(tk.Frame):
         # get selected spectra and plot
         elif self.threadnm == "cali":
             try:
-<<<<<<< HEAD
-=======
-                # self.spec, self.wavelength = read_cal_spec( '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]))
-                self.selectedftir_in = self.selectedftir_in * \
-                    (-1) + np.max(self.selectedftir_in)
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
                 self.ax.plot( self.selectedftir_wv, self.selectedftir_in, 'r', linewidth=0.7)
                 self.axline, = self.ax.plot( self.wavelength, self.spec / np.max(self.spec), linewidth=0.7)
                 self.hscaler.configure( from_=np.min( self.wavelength), to=np.max( self.wavelength), resolution=0.01)
@@ -349,7 +292,6 @@ class CaliApp(tk.Frame):
                 self.canvas.draw()
             except FileNotFoundError:
                 print('File not found')
-<<<<<<< HEAD
 
     def detect_baseline(self):
         try:
@@ -374,31 +316,6 @@ class CaliApp(tk.Frame):
             print('Mode : detect maximas')
         else:
             pass
-=======
-    def smooth_sp(self):
-        window = 5
-        poly_order = 2
-        self.smoothed_sp = savgol_filter(self.spectrum, 6 * window + 1, poly_order, deriv=0)
-        self.smoothed_sp = self.smoothed_sp*(-1) + np.max(self.smoothed_sp)
-        self.mwax.clear()
-        self.mwax.plot(self.smoothed_sp, linewidth=0.7)
-        self.canvas.draw_idle()
-
-    def find_peaks(self):
-
-        self.index = 0
-        try:
-            self.digi_peaks, _ = find_peaks((-1)*self.smoothed_sp + np.max(self.smoothed_sp), prominence=self.digi_prom)
-            self.sim_peaks, _ = find_peaks(self.selectedftir_in, prominence=self.sim_prom)
-            self.sim_xpeaks = self.selectedftir_wv[self.sim_peaks] 
-            self.digi_xpeaks = self.xvals[self.digi_peaks]
-            self.ax.plot(self.sim_xpeaks, self.selectedftir_in[self.sim_peaks], '.', picker=5, markersize=5)
-            self.xpeaks_line, =self.mwax.plot(self.digi_xpeaks, self.smoothed_sp[self.digi_peaks], '.', picker=5, markersize=5)
-        except:
-            print("smooth signal first")
-
-        self.canvas.draw_idle()
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 
     def find_peaks(self):
 
@@ -435,16 +352,11 @@ class CaliApp(tk.Frame):
             pass
 
 
-
     def onclick(self, event):
         if event.dblclick:
             self.peak_is_found = True
             if event.inaxes == self.ax:
-<<<<<<< HEAD
                 self.ax1_lines = np.append(self.ax1_lines, event.xdata)
-=======
-                self.ax1_lines.append(event.xdata)
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
                 self.ax1l = self.ax.vlines(self.ax1_lines, 0, 1, linestyle='solid', linewidth=0.5)
                 self.canvas.draw_idle()
             elif event.inaxes == self.mwax:
@@ -453,7 +365,6 @@ class CaliApp(tk.Frame):
                 self.canvas.draw_idle()
             else:
                 pass
-<<<<<<< HEAD
         else:
             if event.button == 3:
                 if event.inaxes == self.ax:
@@ -480,18 +391,6 @@ class CaliApp(tk.Frame):
                     self.dgax.set_data(self.digi_xpeaks[1], self.spectrum[self.digi_xpeaks[0]])
                     self.canvas.draw_idle()
                     self.ax2_lines = self.digi_xpeaks[1]
-=======
-
-        else:
-            if event.inaxes == self.ax and event.button == 3:
-                self.sim_prom = event.ydata
-                self.ay1l = self.ax.axhline(y=self.sim_prom, linestyle='solid', linewidth=0.5)
-                self.canvas.draw_idle()
-            elif event.inaxes == self.mwax and event.button == 3:
-                self.digi_prom = event.ydata
-                self.ay2l = self.mwax.axhline(y=self.digi_prom, linestyle='solid', linewidth=0.5)
-                self.canvas.draw_idle()
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
             else:
                 pass
     def scaleSpectra(self, dummy):
@@ -528,7 +427,6 @@ class CaliApp(tk.Frame):
         self.sza = float(90) - get_altitude(float(self.latlon[0]), float(self.latlon[1]), self.date_time_obj)
         self.print_sfit_readable_spectrum(float(self.sza), self.latlon, self.date_time_obj)
 
-<<<<<<< HEAD
     def print_sfit_readable_spectrum(self, sza=63.0, latlon=(46.55, 7.98), d=datetime.datetime(1951, 4, 15, 7, 30, 0),\
                                      res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
         try:    
@@ -553,27 +451,6 @@ class CaliApp(tk.Frame):
             np.save('Simulated', [self.selectedftir_wv,self.selectedftir_in])
         except:
             showerror(title='Save Error', message='Can\'t save file')
-=======
-        # update_cal_spec( self.savepath, '{}_{}_calibrated.dat'.format( self.sp_range[0], self.sp_range[1]), [ np.min( self.new_line), np.max( self.new_line)])
-
-    def print_sfit_readable_spectrum(self, sza=63.0, latlon=(46.55, 7.98), d=datetime.datetime(1951, 4, 15, 7, 30, 0), res=0.25, apo='TRI', sn=100.0, rearth=6377.9857):
-        self.new_line = np.hstack(self.new_line)
-        spc = np.hstack(self.spectra)
-        wvn_bounds = [np.min(self.new_line), np.max(self.new_line)]
-        dt_str = d.strftime('%d%m%Y%H%M%S')
-        #fname = os.path.join(self.savepath, '{:.2f}_{:.2f}_calibrated.dat'.format(wvn_bounds[0],wvn_bounds[1]))
-        fname = os.path.join(self.savepath, 'jfj_{}_calibrated.dat'.format(dt_str))
-        #pdb.set_trace()
-        s = ' %4.2f  %8.4f  %4.2f  %5.2f  %5i\n'%(sza, rearth, latlon[0], latlon[1] , sn)
-        s = s + d.strftime(' %Y %m %d %H %M %S\n')
-        s = s + d.strftime(' %d/%m/%Y, %H:%M:%S')+', RES=%5.4f  APOD FN = %3s\n'%(res, apo)
-        s = s + ' %7.3f %7.3f %11.10f %7i'%(wvn_bounds[0], wvn_bounds[1], (wvn_bounds[1]-wvn_bounds[0])/float(len(spc)), len(spc))
-        for i in spc:
-            s+='\n %8.5f'%(i)
-        with open(fname, 'w') as f:
-            f.write(s)
-        print('Wrote file', fname)
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 
 if __name__ == "__main__":
     root = tk.Tk()

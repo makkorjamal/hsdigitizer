@@ -1,16 +1,9 @@
 import tkinter as tk
 import os
-<<<<<<< HEAD
 from digiviewer import DigiApp
 from caliviewer import CaliApp
 from tkinter import ttk
 from config import SpectraConfig
-=======
-from src.digiviewer import DigiApp
-from src.caliviewer import CaliApp
-import ttk
-from src.config import SpectraConfig
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 
 class Root(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -223,13 +216,13 @@ class Application(ttk.Notebook):
         Example: DigiApp(tk.Frame)
 
         """
-<<<<<<< HEAD
         tab1 = ttk.Frame(self)
         tab2 = ttk.Frame(self)
-=======
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
         digi_app = DigiApp(root)
         cali_app = CaliApp(root)
         # global cali_gthread = cali_app.get_globals()
         self.add(digi_app, text = "Digitization")
         self.add(cali_app , text = "Calibration")
+
+root = Root()
+root.mainloop()

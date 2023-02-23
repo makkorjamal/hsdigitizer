@@ -1,16 +1,7 @@
-<<<<<<< HEAD
-=======
-import image_slicer
-import sys
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 from sklearn.preprocessing import normalize
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
-=======
-import image_slicer 
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 from sklearn.impute import SimpleImputer
 from scipy.signal import  correlate
 from pysolar.solar import *
@@ -85,37 +76,20 @@ def imputate_nan(sp_file):
     imputated_file = imp.transform(newfile)
     return (imputated_file.flatten())
 
-<<<<<<< HEAD
-=======
-def sza_calc(datetime_str, lat, lon):
-    datetime_obj = datetime.strptime(datetime_str, '%d/%m/%Y %H:%M').astimezone(timezone(timedelta(hours = 1)))
-    print(get_azimuth(lat, lon, datetime_obj))
-
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
 def find_sprange(sim_sp, obs_sp):
+    artspec_files = sorted(fileList('./artspec/'))
     art_spec = []
     wv_artsp = []
-<<<<<<< HEAD
     _sim = np.recfromtxt('simulated.dat', names = ['wavel', 'spec'])
-=======
-    # for artsp_file in artspec_files:
-    #     wv_artsp_tmp, artspec_tmp= read_spectra(artsp_file)
-    #     art_spec.append(artspec_tmp)
-    #     wv_artsp.append(wv_artsp_tmp)
-
-    # art_spec= np.hstack(art_spec)
-    # wv_artsp = np.hstack(wv_artsp)
-    _sim = np.recfromtxt('data/simulated.dat', names = ['wavel', 'spec'])
->>>>>>> 7b527d49b6cac952bd85053672915743839d0a0c
     art_spec =np.hstack(_sim['spec'])
     wv_artsp= np.hstack(_sim['wavel'])
     digi_spec = np.hstack(normalize(np.loadtxt('data/sroll_17_avril_02_digitized.dat').reshape(1,-1)))
     autocorr = correlate(art_spec,digi_spec , mode='same', method = 'fft')
     artspec_index = np.where((autocorr == max(autocorr)))[0] 
     print(wv_artsp[artspec_index])
-    _, ax = plt.subplots()
-    _, ax1 = plt.subplots()
-    _, ax2 = plt.subplots()
+    fig, ax = plt.subplots()
+    fig1, ax1 = plt.subplots()
+    fig2, ax2 = plt.subplots()
     ax.plot(wv_artsp, art_spec)
     ax1.plot(np.arange(len(autocorr)), autocorr)
     ax2.plot(np.arange(len(digi_spec)), digi_spec)

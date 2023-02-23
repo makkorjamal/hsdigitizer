@@ -1,6 +1,6 @@
 import json
 import os
-from src.spectrum import Spectrum
+from spectrum import Spectrum
 class JsonParser:
     """Class to save spectra in a json file"""
 
@@ -14,6 +14,14 @@ class JsonParser:
        with open(os.path.join("spectra_file.json"), "w") as write_file:
            json.dump([obj.__dict__ for obj in self.spectrums], write_file)
 
+    # def update_json(self, filename, dt = []):
+
+    #     with open(os.path.join(self.jpath,filename), "r") as read_file:
+    #         data = json.load(read_file)
+    #         [data.append([d.update(dd) for dd in dt]) for d in data]
+
+    #    with open(os.path.join(self.jpath,"spectra_file.json"), "w") as write_file:
+    #        json.dump(data, write_file)
 
     def read_json(self,filename):
         #read the saved json.
