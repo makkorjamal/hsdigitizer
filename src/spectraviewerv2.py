@@ -8,12 +8,13 @@ from config import SpectraConfig
 class Root(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-
         width = self.winfo_screenwidth()
         height = self.winfo_screenheight()
-        self.resizable(False, False)
+        #self.resizable(False, False)
         self.title("Spectra Digitizer")
-        self.geometry("{}x{}".format(int(width -0.1*width),int(height )))
+        self.geometry(f"{int(width)}x{int(height)}")
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=2)
         #initialize menu
         self.config(menu=MenuBar(self))
         self.appFrame = Application(self)
@@ -183,22 +184,23 @@ class About(tk.Toplevel):
         tk.Toplevel.__init__(self)
 
         self.wm_title("About")
-        self.spPath = tk.StringVar()
-        self.spPath.set('About ')
         self.createWidgets()
 
     def createWidgets(self):
-        self.paramFrame = tk.LabelFrame(self, padx = 5, pady = 5, text = 'About')
-        self.pathFrame = tk.Frame(self.paramFrame, padx = 5, pady = 5)
-        self.pathFrame.grid(row = 0, column = 0)
-        self.paramFrame.pack()
+        self.aboutFrame = tk.LabelFrame(self, padx = 5, pady = 5, text = 'About us')
+        self.aFrame = tk.Frame(self.aboutFrame, padx = 5, pady = 5)
+        self.aFrame.grid(row = 0, column = 0)
+        self.info = tk.Label(self.aFrame, text = 'This software allows the extraction and calibration\
+                              of spectra printed on paper')
+        self.aFrame.pack()
 
 class StatusBar(ttk.Frame):
 
     def __init__(self, master):
         ttk.Frame.__init__(self, master)
-        self.label = ttk.Label(self, relief='sunken', anchor='w')
+        self.label = ttk.Label(self, relief='sunken', anchor='w', padding=5)
         self.label.pack(fill='x')
+        self.set('Ready...')
 
     def set(self, format, *args):
         self.label.config(text=format % args)
@@ -216,9 +218,8 @@ class Application(ttk.Notebook):
         Example: DigiApp(tk.Frame)
 
         """
-        tab1 = ttk.Frame(self)
-        tab2 = ttk.Frame(self)
-        digi_app = DigiApp(root)
+        status = StatusBar(self)
+        digi_app = DigiApp(root, status)
         cali_app = CaliApp(root)
         # global cali_gthread = cali_app.get_globals()
         self.add(digi_app, text = "Digitization")

@@ -38,33 +38,36 @@ class CaliApp(tk.Frame):
         self.wavelength = []
 
     def create_widgets(self):
-        self.plotframe = tk.LabelFrame(self, padx=3, pady=15)
+        self.top_frame = tk.Frame(self)
+        self.tbframe = tk.LabelFrame(self.top_frame, padx = 0, pady = 0)
+        self.tbframe.grid(row=0, column=0)
+
+        self.plotframe = tk.LabelFrame(self.top_frame, padx=3, pady=10)
         self.plotframe.grid(row=1, column=0)
         screen_dpi = 350
         self.parent.update()
         plot_width = int(0.9 * (self.parent.winfo_width() / screen_dpi))
         plot_height = int(0.9 * (self.parent.winfo_height() / screen_dpi))
         self.fig = Figure(figsize=(plot_width, plot_height), dpi=screen_dpi)
-        gs = gridspec.GridSpec(nrows=4, ncols=4, figure=self.fig)
+        gs = gridspec.GridSpec(nrows=4, ncols=5, figure=self.fig)
 
-        self.ax = self.fig.add_subplot(gs[0:2, :-1], picker=True)
-        self.calax = self.fig.add_subplot(gs[1:3, 3:4])
-        self.calax.tick_params(labelsize=2, labelrotation = 45)
-        self.ax.tick_params(labelsize=8)
-        self.mwax = self.fig.add_subplot(gs[2:4, :-1], picker=True)
+        self.ax = self.fig.add_subplot(gs[0:2, :4], picker=True)
+        self.calax = self.fig.add_subplot(gs[1:3, 4:5])
+        self.calax.tick_params(labelsize=3, labelrotation = 45)
+        self.ax.tick_params(labelsize=5)
+        self.mwax = self.fig.add_subplot(gs[2:4, :4], picker=True)
         # self.fax = self.ax.twinx()
-        self.ax.tick_params(labelsize=8, axis='x')
+        self.ax.tick_params(labelsize=5, axis='x')
         self.ax.xaxis.set_ticks_position('top')
-        self.mwax.tick_params(labelsize=8)
+        self.calax.yaxis.set_ticks_position('right')
+        self.mwax.tick_params(labelsize=5)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.plotframe)
         self.canvas.get_tk_widget().grid(row=0, column=0)
         self.cid = self.canvas.mpl_connect('button_press_event', self.onclick)
-        self.tbframe = tk.LabelFrame(self, padx = 0, pady = 0)
-        self.tbframe.grid(row=0, column=0)
         self.toolbar = NavigationToolbar2Tk(self.canvas, self.tbframe)
         self.toolbar.update()
 
-        self.listframe = tk.LabelFrame(self, padx=20, pady=16)
+        self.listframe = tk.LabelFrame(self.top_frame, padx=20, pady=16)
         self.listframe.grid(row=1, column=1)
         self.spectralist = tk.Listbox( self.listframe, height=plot_height * 10, font=( "Helvetica", 12))
         self.spectralist.pack(side="left", fill="x")
@@ -76,7 +79,7 @@ class CaliApp(tk.Frame):
 
         ####
 
-        self.commandframe = tk.LabelFrame(self, padx=15, pady=15)
+        self.commandframe = tk.LabelFrame(self.top_frame, padx=15, pady=15)
         self.commandframe.grid(row=2, column=0)
 
        # Plot
@@ -97,10 +100,6 @@ class CaliApp(tk.Frame):
                                 variable=self.hscale_var, orient=tk.HORIZONTAL, length=300)
         self.hscaler.grid(row=1, column=0)
 
-        #self.vscale_var = tk.DoubleVar()
-        #self.vscale_var.set(50)
-        #self.vscaler = tk.Scale( self.plotframe, from_=1, to=100, command=self.scaleSpectra, variable=self.vscale_var, orient=tk.VERTICAL, length=300, resolution=0.1)
-        #self.vscaler.grid(row=0, column=1)
         self.sbutton = tk.Button( self.commandframe, text="Save", command=self.save_adjusted_sp, padx=5, pady=4, font=( "Helvetica", 16))
         self.sbutton.grid(row=0, column=3)
 
@@ -117,7 +116,7 @@ class CaliApp(tk.Frame):
         self.peakbutton.grid(row=0, column=0)
         self.checkvar3 = tk.IntVar()
         self.checkvar3.set(0)
-        self.picks_max = tk.Checkbutton( self.peakframe, text='Detect maximas', \
+        self.picks_max = tk.Checkbutton( self.peakframe, text='Detect maximas   ', \
                                         variable=self.checkvar3, onvalue=1, offvalue=0, command=self.peak_mode)
         self.picks_max.grid(row=0, column = 1)
 
@@ -132,6 +131,7 @@ class CaliApp(tk.Frame):
         self.poly_checkbtn.grid(row=0, column=1)
         self.morpth_checkbtn = tk.Radiobutton( self.baselineframe, text='Morph', variable=self.checkvar1, value=0)
         self.morpth_checkbtn.grid(row=0, column=2)
+        self.top_frame.pack()
         # self.span_select = SpanSelector( self.mwax, self.on_pltselect, 'horizontal', useblit=True, rectprops=dict( alpha=0.5, facecolor='red'), button=3)
 
     def quit(self):

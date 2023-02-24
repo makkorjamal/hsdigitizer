@@ -1,8 +1,7 @@
 src/build/
 src/dist/
 src/__pycache__
-hsdigitizer_env/
+hsdigitizer-env*
 build/
 src/*.pyc
 cli.spec
-requirements.txt

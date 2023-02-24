@@ -6,7 +6,6 @@ from tkinter import ttk
 import numpy as np
 #from matplotlib.backends.backend_tkagg import (
 #    FigureCanvasTkAgg, NavigationToolbar2Tk)
-
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 # Implement the default Matplotlib key bindings.
 from matplotlib.figure import Figure
@@ -16,15 +15,15 @@ from config import SpectraConfig
 import cv2
 from tkinter.messagebox import showerror
 class DigiApp(tk.Frame):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, status, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.create_widgets()
         self.threadnm = ""
-        home = os.path.expanduser('~')
         self.data = []
         self.active = ""
         self.out_dir = ''
+        self.status = status
 
     
     def create_widgets(self):
@@ -32,7 +31,7 @@ class DigiApp(tk.Frame):
         self.tbframe = tk.LabelFrame(self, padx = 0, pady = 0)
         self.tbframe.grid(row=0, column=0)
 
-        self.plotframe= tk.LabelFrame(self, padx = 10, pady = 10)
+        self.plotframe= tk.LabelFrame(self, padx = 3, pady = 10)
         self.plotframe.grid(row = 1, column = 0)
         screen_dpi = 350 
         self.parent.update()
@@ -96,15 +95,17 @@ class DigiApp(tk.Frame):
         """
 
         try:
-
+            self.status.set('Digitizing...')
             self.base_dir = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
             jsparser = JsonParser(self.base_dir,[])
             self.data = jsparser.read_json('spectra_file.json')
             self.out_dir = os.makedirs(os.path.join(self.base_dir,'digitized/'), exist_ok=True)
+            self.status.set('Done!')
 
         except FileNotFoundError:
             self.data = []
             self.base_dir = ""
+            self.status.set('Error: File not found')
 
         self.dpath = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
         Digitizer(self.base_dir, self.out_dir)
