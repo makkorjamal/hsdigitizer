@@ -13,7 +13,6 @@ from matplotlib.figure import Figure
 from jsonparser import JsonParser
 from pysolar.solar import *
 from calibration import Calibrator
-import itertools as it
 from tkinter.messagebox import showerror, showinfo
 
 

@@ -1,7 +1,6 @@
-src/build/
-src/dist/
 src/__pycache__
 hsdigitizer-env*
 build/
 src/*.pyc
 cli.spec
+*.spec

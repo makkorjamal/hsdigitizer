@@ -200,7 +200,7 @@ class StatusBar(ttk.Frame):
         ttk.Frame.__init__(self, master)
         self.label = ttk.Label(self, relief='sunken', anchor='w', padding=5)
         self.label.pack(fill='x')
-        self.set('Ready...')
+        #self.set('Ready...')
 
     def set(self, format, *args):
         self.label.config(text=format % args)
@@ -219,11 +219,12 @@ class Application(ttk.Notebook):
 
         """
         status = StatusBar(self)
+        status.set('Ready')
         digi_app = DigiApp(root, status)
         cali_app = CaliApp(root)
         # global cali_gthread = cali_app.get_globals()
         self.add(digi_app, text = "Digitization")
         self.add(cali_app , text = "Calibration")
 
-root = Root()
-root.mainloop()
+#root = Root()
+#root.mainloop()

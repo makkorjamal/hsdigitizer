@@ -4,10 +4,7 @@ import os
 from config import SpectraConfig
 from tkinter import ttk
 import numpy as np
-#from matplotlib.backends.backend_tkagg import (
-#    FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-# Implement the default Matplotlib key bindings.
 from matplotlib.figure import Figure
 from digitization import Digitizer
 from jsonparser import JsonParser
