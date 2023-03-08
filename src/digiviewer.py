@@ -137,19 +137,19 @@ class DigiApp(tk.Frame):
         """
         This function checks if the thread is still running and stops the progress when the thread is dead
         """
-        try:
-            if self.g_thread.is_alive():
-                self.parent.after(20, self.check_g_thread)
-            else:
-                self.progressbar.stop()
-                self.populate_list()
-        except:
-            showerror(title='Parameter Error', message='Paramaters needs to be set up\
-                      Go to File > Set Parameters')
+        #try:
+        if self.g_thread.is_alive():
+            self.parent.after(20, self.check_g_thread)
+        else:
+            self.progressbar.stop()
+            self.populate_list()
+        #except:
+        #    showerror(title='Parameter Error', message='Paramaters needs to be set up\
+        #              Go to File > Set Parameters')
 
     def populate_list(self):
         """
-        This fucntion populates the list by reading the json file that contains:
+        This function populates the list by reading the json file that contains:
             *the name of the image*
             *the path of the digitzed spectrum*
         """

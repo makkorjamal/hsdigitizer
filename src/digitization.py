@@ -10,7 +10,6 @@ from config import SpectraConfig
 from spectrum import Spectrum
 from jsonparser import JsonParser
 from glob import glob
-from scipy.stats import sem
 
 class Digitizer():
 
@@ -47,11 +46,10 @@ class Digitizer():
         mask = cv2.inRange(hsv, min_val, max_val)
         result = cv2.bitwise_and(img1,img1, mask= mask)
         grayImage = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-        grayImage = cv2.GaussianBlur(grayImage,(13,13),0) #remove salt and peper noise
-        (_, source) = cv2.threshold(grayImage, 27, 255, cv2.THRESH_BINARY)
-        source = (source == 255)
+        grayImageF = cv2.GaussianBlur(grayImage,(13,13),0) #remove salt and peper noise
+        (_, source) = cv2.threshold(grayImageF, 27, 255, cv2.THRESH_BINARY)
         sp_pixels = np.arange(source.shape[0])
-        spectrum = np.array([np.mean(sp_pixels[np.flip(bw)]) for bw in source.T])
+        spectrum = np.array([np.mean(sp_pixels[np.flip(bw)]) for bw in (source.T == 0xFF)])
         idx = np.arange(spectrum.shape[0])
         nanind = np.where(np.isfinite(spectrum))
         inp = intp.interp1d(idx[nanind], spectrum[nanind],bounds_error=False)
@@ -63,6 +61,6 @@ class Digitizer():
         spath = sp_name
         with open(os.path.join(spath), 'w') as f:
             for i in self.digitized_spectrum:
-                f.write('%4.2f\n'%i)
+                f.write('%6.2f\n'%i)
         print('{}'.format(spath))
         return  Spectrum(impath,sp_name, sp_range = sp_range )

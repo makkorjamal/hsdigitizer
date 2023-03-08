@@ -226,5 +226,5 @@ class Application(ttk.Notebook):
         self.add(digi_app, text = "Digitization")
         self.add(cali_app , text = "Calibration")
 
-#root = Root()
-#root.mainloop()
+root = Root()
+root.mainloop()

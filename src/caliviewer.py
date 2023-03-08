@@ -11,7 +11,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 # Implement the default Matplotlib key bindings.
 from matplotlib.figure import Figure
 from jsonparser import JsonParser
-from pysolar.solar import *
+from pysolar.solar import get_altitude
 from calibration import Calibrator
 from tkinter.messagebox import showerror, showinfo
 
@@ -138,38 +138,43 @@ class CaliApp(tk.Frame):
         self.parent.destroy()  # this is necessary on Windows to prevent crash
 
     def calibrate_sp(self):
-        #try:
-        cl_fname = '{}_{}'.format( self.sp_range[0], self.sp_range[1]) + '_cal_lines.dat' 
+        self.spectrum = (self.spectrum - np.min(self.morph_baseline)) / (np.max(self.morph_baseline)\
+                                                                         - np.min(self.morph_baseline))
+        cl_fname = f'{self.sp_range[0]}_{self.sp_range[1]}' + '_cal_lines.dat' 
         cl_path = os.path.join(self.savepath, cl_fname)
-        
-        if self.peak_is_found == True:
-            self.cal_wv = self.ax1_lines 
-            self.cal_pix = self.ax2_lines
-        print(self.cal_pix)
-        with open(cl_path, 'w') as f:
-            if len(self.cal_wv) == len(self.cal_pix) and len(self.cal_pix) > 0:
+        self.threadnm = "cali"
+        try:
+            
+            #if self.peak_is_found == True:
+            
+            self.cal_wv, self.cal_pix = np.genfromtxt(cl_path, delimiter=' ', unpack = True)
+            print(self.cal_wv)
+            self.calibrator = Calibrator(cl_path, self.spectrum, self.cal_wv, self.cal_pix)
+            self.spec= self.calibrator.y2
+            self.spectra= self.calibrator.y2
+            self.wavelength  = self.calibrator.xcal
+            self.ax.clear()
+            self.plot_spectra()
 
-                for i, j in zip(self.cal_wv, self.cal_pix):
-                    f.write('%4.2f %4.1f\n' % (i, j))
-                #self.calibrator = Calibrator(self.savepath, self.spectrum, cl_fname)
-                self.spectrum = (self.spectrum - np.min(self.morph_baseline)) / (np.max(self.morph_baseline)\
-                                                                                  - np.min(self.morph_baseline))
-                self.calibrator = Calibrator(self.savepath, self.spectrum, self.cal_wv, self.cal_pix)
-                self.spec= self.calibrator.y2
-                self.spectra= self.calibrator.y2
-                #self.spec= self.calibrator.y2
-                #self.spectra = self.spec
-                self.wavelength  = self.calibrator.xcal
-                print(self.spectra)
-                self.ax.clear()
-                self.threadnm = "cali"
-                self.plot_spectra()
-            else:
-                showerror(title='Error',message= f'Calibration data must be non empty and the same size \
-                          Sim={len(self.cal_wv)} Dig={len(self.cal_pix)}\
-                          Try middle click to delete picks')
-#        except:
-#            self.pbutton.config(bg="light blue")
+        except IOError:
+            with open(cl_path, 'w') as f:
+
+                self.cal_wv = self.ax1_lines 
+                self.cal_pix = self.ax2_lines
+                if len(self.cal_wv) == len(self.cal_pix) and len(self.cal_pix) > 0:
+                    for i, j in zip(self.cal_wv, self.cal_pix):
+                        f.write('%4.2f %4.1f\n' % (i, j))
+                    self.calibrator = Calibrator(cl_path, self.spectrum, self.cal_wv, self.cal_pix)
+                    self.spec= self.calibrator.y2
+                    self.spectra= self.calibrator.y2
+                    self.wavelength  = self.calibrator.xcal
+                    self.ax.clear()
+                    self.plot_spectra()
+                else:
+                    showerror(title='Error',message= f'Calibration data must be non empty and the same size \
+                            Sim={len(self.cal_wv)} Dig={len(self.cal_pix)}\
+                            Try middle click to delete picks')
+            #self.pbutton.config(bg="light blue")
 
 
         # self.threadnm = "digi"
