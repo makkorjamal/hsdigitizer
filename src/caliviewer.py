@@ -183,8 +183,8 @@ class CaliApp(tk.Frame):
         self.aimass_selec = pvlib.location.Location(latitude = latitude, longitude = longitude, altitude = altitude)\
                 .get_airmass(datetime_array,solar_position=sza, model='kastenyoung1989')
         self.sza_selec = sza.zenith.values
-        #self.spectrum = (self.spectrum - np.min(self.morph_baseline)) / (np.max(self.morph_baseline) - np.min(self.morph_baseline))
-        self.spectrum = (self.spectrum) / (self.img_shape[0])
+        self.spectrum = (self.spectrum - np.min(self.morph_baseline)) / (np.max(self.morph_baseline) - np.min(self.morph_baseline))
+        #self.spectrum = (self.spectrum) / (self.img_shape[0])
         cl_fname = f'{self.sp_range[0]}_{self.sp_range[1]}' + '_cal_lines.dat'
         cl_path = os.path.join(self.savepath, cl_fname)
         self.threadnm = "cali"

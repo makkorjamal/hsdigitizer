@@ -20,30 +20,17 @@ class Calibrator():
         self.calibrate()
 
     def calibrate(self):
-        # Define the polynomial model with a shift parameter
-        def shifted_polynomial(x, a, b, c, d, shift):
-            return a * (x + shift)**3 + b * (x + shift)**2 + c * (x + shift) + d
-
-        model = Model(shifted_polynomial)
-        
-        # Initial parameter guesses
-        params = model.make_params(a=0, b=0, c=0, d=0, shift=0)
-        
-        # Setting up the progress bar
+        # Define the polynomial model 
+        def n_polynomial(x, a, b, c, d):
+            return a * x**3 + b * x**2 + c * x + d
+        model = Model(n_polynomial)
+        params = model.make_params(a=0, b=0, c=0, d=0)
         pbar = tqdm(total=100, desc="Fitting Progress")
-        
-        # Callback function for the fitting process
         def update_progress(params, iter, resid, *args, **kws):
             pbar.update(1)
-        
-        # Fitting the model
         result = model.fit(self.cal_wv, x=self.cal_pix, params=params, iter_cb=update_progress)
         self.xcal = result.eval(x=self.x2)
-
-        # Close the progress bar
         pbar.close()
-
-        # Write results to a file
         with open('fit.stats', 'a') as f:
             for line in result.fit_report():
                 f.write(line)
