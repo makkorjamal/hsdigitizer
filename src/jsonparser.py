@@ -2,7 +2,7 @@ import json
 import os
 from spectrum import Spectrum
 class JsonParser:
-    """Class to save spectra in a json file"""
+    """Class to save spectra metadata in a json file"""
 
     def __init__(self,jpath, spectrums = []):
         self.spectrums = spectrums
@@ -30,6 +30,6 @@ class JsonParser:
         with open(os.path.join(filename), "r") as read_file:
             data = json.load(read_file)
         for d in data:
-            sp = Spectrum(d['img_name'],d['sp_name'],d['calsp_name'], d['calsplines_name'], d['sp_range'])
+            sp = Spectrum(d['img_name'], d['img_shape'],d['sp_name'],d['calsp_name'], d['calsplines_name'], d['sp_range'])
             self.spectrums.append(sp)
         return self.spectrums 

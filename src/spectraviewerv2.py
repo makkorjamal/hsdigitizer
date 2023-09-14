@@ -46,7 +46,8 @@ class MenuBar(tk.Menu):
 class Parameters(tk.Toplevel):
     def __init__(self, *args, **kwargs):
         tk.Toplevel.__init__(self)
-
+        self.entries = {}
+        self.counter = 1
         self.wm_title("Parameters")
         self.spPath = tk.StringVar()
         self.spPath.set('Spectra path not yet set')
@@ -69,8 +70,15 @@ class Parameters(tk.Toplevel):
         self.sTime.set('00:00')
         self.eTime.set('00:00')
 
-
         self.createWidgets()
+
+    def add_field_popup(self):
+        popup = tk.Toplevel(self)
+        popup.title("Enter Label")
+        tk.Label(popup, text="Field Label:").pack(pady=10, padx=10)
+        label_entry = tk.Entry(popup)
+        label_entry.pack(pady=10, padx=10)
+        tk.Button(popup, text="OK", command=lambda: self.create_field(label_entry.get(), popup)).pack(pady=10)
 
 
     def createWidgets(self):
@@ -148,19 +156,23 @@ class Parameters(tk.Toplevel):
         self.parambtnFrame.grid(row = 3, column = 0)
         self.cancelBtn = tk.Button(self.parambtnFrame, text = 'Cancel', command = self.destroy)
         self.saveBtn = tk.Button(self.parambtnFrame, text = 'Save', command = self.save_params)
-        self.cancelBtn.grid(row = 0, column = 0)
-        self.saveBtn.grid(row = 0, column = 1)
+        self.cancelBtn.grid(row = 0, column = 3)
+        self.saveBtn.grid(row = 0, column = 2)
+        self.newField = tk.Button(self.parambtnFrame, text="New Field", command=self.add_field_popup)
+        self.newField.grid(row = 0, column = 1)
+        #self.newField.pack(pady=20)
         self.paramFrame.pack()
+        print(self.entries)
 
-    def save_params(self):
-        default = {'Resolution':self.spRes.get(), 'Apodization':self.spAPO.get(), 'SignalToNoise':self.spSN.get(), 
-                'Latitude/Longitude':self.spLatlon.get()}
-        spconfig = {'SpectraPath':self.spPath.get(), 'SolarZenith':self.spSZA.get(), 'REarth':self.spREarth.get(),
-                'MinWavelength':self.spMinWV.get(),'MaxWavelength':self.spMaxWV.get(),'Date':self.spDT.get(),
-                'StartTime':self.sTime.get(), 'EndTime':self.eTime.get()}
-        SpectraConfig.fill_config(default, spconfig)
-        self.destroy()
-
+    def create_field(self, field_label, popup):
+        popup.destroy()
+        input_variable = tk.StringVar()
+        label = tk.Label(self.datetimeFrame, text=field_label)
+        entry = tk.Entry(self.datetimeFrame, textvariable=input_variable)
+        label.grid(row = 2 + self.counter, column = 0)
+        entry.grid(row = 2 + self.counter, column = 1)
+        self.entries[field_label] = input_variable
+        self.counter += 1
 
     def ask_directory(self):
         dir_param = {}
@@ -179,6 +191,19 @@ class Parameters(tk.Toplevel):
         else:
             self.pathLabel.config(bg = 'red')
             self.spPath.set('Not a valid directory')
+
+    def save_params(self):
+        default = {'Resolution':self.spRes.get(), 'Apodization':self.spAPO.get(), 'SignalToNoise':self.spSN.get(), 
+                'Latitude/Longitude':self.spLatlon.get()}
+        spconfig = {'SpectraPath':self.spPath.get(), 'SolarZenith':self.spSZA.get(), 'REarth':self.spREarth.get(),
+                'MinWavelength':self.spMinWV.get(),'MaxWavelength':self.spMaxWV.get(),'Date':self.spDT.get(),
+                'StartTime':self.sTime.get(), 'EndTime':self.eTime.get()}
+        if self.entries:
+            spconfig ={key: value for key, value in self.entries.items()}
+        SpectraConfig.fill_config(default, spconfig)
+        self.destroy()
+
+
 class About(tk.Toplevel):
     def __init__(self, *args, **kwargs):
         tk.Toplevel.__init__(self)

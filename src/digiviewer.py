@@ -10,7 +10,9 @@ from digitization import Digitizer
 from jsonparser import JsonParser
 from config import SpectraConfig
 import cv2
+from matplotlib.lines import Line2D
 from tkinter.messagebox import showerror
+
 class DigiApp(tk.Frame):
     def __init__(self, parent, status, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
@@ -32,8 +34,8 @@ class DigiApp(tk.Frame):
         self.plotframe.grid(row = 1, column = 0)
         screen_dpi = 350 
         self.parent.update()
-        plot_width = int(0.9*(self.parent.winfo_width()/screen_dpi))
-        plot_height =int( 0.9*(self.parent.winfo_height()/screen_dpi))
+        plot_width = int(0.90*(self.parent.winfo_width()/screen_dpi))
+        plot_height =int( 0.90*(self.parent.winfo_height()/screen_dpi))
         fig = Figure(figsize=(plot_width, plot_height), dpi=screen_dpi)
         # t = np.arange(0, 3, .01)
         self.ax = fig.add_subplot(111)
@@ -43,7 +45,7 @@ class DigiApp(tk.Frame):
         self.canvas.get_tk_widget().grid(row = 0, column = 0)
         self.toolbar = NavigationToolbar2Tk(self.canvas, self.tbframe)
         self.toolbar.update()
-        self.cid = self.canvas.mpl_connect('Pick', lambda event: click_command(event.xdata, event.ydata))
+        self.cid = self.canvas.mpl_connect('pick_event', lambda event: click_command(event.xdata, event.ydata))
         self.empty_vbl = tk.Label(self.plotframe, text = "", padx = 10)
         self.empty_vbl.grid(row = 0, column = 1)
         self.empty_hbl = tk.Label(self.plotframe, text = "", pady = 10)
@@ -105,6 +107,7 @@ class DigiApp(tk.Frame):
             self.status.set('Error: File not found')
 
         self.dpath = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
+        print(f" path is {self.dpath}")# = SpectraConfig.read_conf()['spectra.conf']['spectrapath']
         Digitizer(self.base_dir, self.out_dir)
 
     def start_multip_thread(self, threadnm):
@@ -137,15 +140,15 @@ class DigiApp(tk.Frame):
         """
         This function checks if the thread is still running and stops the progress when the thread is dead
         """
-        #try:
-        if self.g_thread.is_alive():
-            self.parent.after(20, self.check_g_thread)
-        else:
-            self.progressbar.stop()
-            self.populate_list()
-        #except:
-        #    showerror(title='Parameter Error', message='Paramaters needs to be set up\
-        #              Go to File > Set Parameters')
+        try:
+            if self.g_thread.is_alive():
+                self.parent.after(20, self.check_g_thread)
+            else:
+                self.progressbar.stop()
+                self.populate_list()
+        except:
+            showerror(title='Parameter Error', message='Paramaters needs to be set up\
+                      Go to File > Set Parameters')
 
     def populate_list(self):
         """
@@ -157,6 +160,7 @@ class DigiApp(tk.Frame):
         jsparser = JsonParser(self.base_dir,[])
         try:
             self.data = jsparser.read_json('spectra_file.json')
+            print(f"files are {[dat.sp_name for dat in self.data]}")
         except FileNotFoundError:
             self.data = []
         self.threadnm = "digi"
@@ -181,7 +185,6 @@ class DigiApp(tk.Frame):
                 im_path = os.path.join(self.base_dir,self.img_selected)
                 org_img = cv2.imread(im_path,cv2.COLOR_BGR2RGB)
                 self.RGB_img = cv2.cvtColor(org_img, cv2.COLOR_BGR2RGB)
-                #self.ax.clear()
                 self.rgbline = self.ax.imshow(self.RGB_img ,interpolation= None , cmap='viridis',aspect='auto')
                 self.canvas.draw()
                 self.pbutton['state'] = "normal"
@@ -194,11 +197,28 @@ class DigiApp(tk.Frame):
         """
         try:
             if self.threadnm == "digi":
-                self.spectrum = np.loadtxt(os.path.join(self.base_dir, self.sp_selected))
+                spec_path = os.path.join(self.base_dir, self.sp_selected)
+                self.spectrum = np.loadtxt(spec_path)
             x_vals = np.arange(0,len(self.spectrum))
             self.ax.plot(x_vals,self.spectrum, linewidth = 0.3)
             self.rgbline.set_data(self.RGB_img)
             self.ax.invert_yaxis()
+            label_fontsize = 4
+            self.ax.set_xlabel("Pixels Index", fontsize= label_fontsize)
+            self.ax.set_ylabel("Pixels Index", fontsize= label_fontsize)
+                    # Set tick label size
+            desired_size = 4  # or whatever size you prefer
+            self.ax.tick_params(axis='both', which='major', labelsize=desired_size)
+            self.ax.tick_params(axis='both', which='major', length=0)
+
+            #legend_elements = [Line2D([0], [0], color='b', lw=0.5, label='Digitized line'),
+            #Line2D([0], [0], color='#ee7870', lw=0.5, label='Printed line')]
+            #legend_elements = [Line2D([0], [0], color='b', lw=0.5, label='Digitized line'),
+            #       Line2D([0], [0], color='#ee7870', lw=0.5, label='LR line'),
+            #       Line2D([0], [0], color='black', lw=0.5, label='HR Line')]
+
+            # Add legend with custom entries
+            #self.ax.legend(handles=legend_elements, loc="upper left", framealpha=0.0, prop={'size': 4})
             self.canvas.draw_idle()
         except FileNotFoundError:
             print('File not found')

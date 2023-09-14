@@ -5,3 +5,10 @@ build/
 src/*.pyc
 cli.spec
 *.spec
+.spyproject/
+src/calibration.py.bak
+src/calibration.py.bak.2
+src/caliviewer.py.bak
+src/digitization.py.bak
+src/simulated_mb.npz
+
